@@ -1,1 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="description" content="STUDY PLANNER — Organise. Révise. Réussis.">
+  <title>STUDY PLANNER 🌸</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <section id="auth-screen" class="screen auth-screen">
+    <div class="auth-container">
+      <div class="brand-logo"><div class="brand-flower">🌸</div><h1>STUDY PLANNER</h1><p>Organise. Révise. Réussis.</p></div>
+
+      <div id="login-view" class="auth-card">
+        <div class="auth-card-header"><h2>Bienvenue 🌷</h2><p>Retrouve ton espace d'étude.</p></div>
+        <form id="login-form">
+          <div class="form-group"><label for="login-email">Adresse e-mail</label><input id="login-email" type="email" placeholder="ton@email.com" required></div>
+          <div class="form-group"><label for="login-password">Mot de passe</label><input id="login-password" type="password" placeholder="••••••••" required></div>
+          <button class="primary-button full-width" type="submit">Se connecter</button>
+        </form>
+        <div class="auth-divider"><span>ou</span></div>
+        <button id="show-signup-button" class="secondary-button full-width">Créer mon compte</button>
+        <button id="demo-login-button" class="text-button full-width">Découvrir la démo</button>
+      </div>
+
+      <div id="signup-view" class="auth-card hidden">
+        <div class="auth-card-header"><h2>Créer ton espace 🌸</h2><p>Personnalise ton expérience.</p></div>
+        <form id="signup-form">
+          <div class="form-row">
+            <div class="form-group"><label>Prénom</label><input id="signup-first-name" required></div>
+            <div class="form-group"><label>Nom d'affichage</label><input id="signup-display-name" required></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Âge</label><input id="signup-age" type="number" min="10" max="100" required></div>
+            <div class="form-group"><label>Classe / niveau</label><input id="signup-class" placeholder="Ex : Seconde" required></div>
+          </div>
+          <div class="form-group"><label>Date de naissance</label><input id="signup-birthdate" type="date" required></div>
+          <div class="form-group"><label>Adresse e-mail</label><input id="signup-email" type="email" required></div>
+          <div class="form-group"><label>Mot de passe</label><input id="signup-password" type="password" minlength="6" required></div>
+          <div class="avatar-selection"><p class="form-label">Choisis ton avatar</p><div class="avatar-grid signup-avatars">
+            <button type="button" class="avatar-option selected" data-avatar="🌸">🌸</button><button type="button" class="avatar-option" data-avatar="🌷">🌷</button><button type="button" class="avatar-option" data-avatar="🌼">🌼</button><button type="button" class="avatar-option" data-avatar="🦋">🦋</button><button type="button" class="avatar-option" data-avatar="🐰">🐰</button><button type="button" class="avatar-option" data-avatar="⭐">⭐</button>
+          </div></div>
+          <button class="primary-button full-width" type="submit">Créer mon espace</button>
+        </form>
+        <button id="show-login-button" class="text-button full-width">J'ai déjà un compte</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="main-app" class="main-app hidden">
+    <aside class="sidebar">
+      <div class="sidebar-brand"><div class="sidebar-logo">🌸</div><div><h2>STUDY <span>PLANNER</span></h2><p>Organise. Révise. Réussis.</p></div></div>
+      <nav class="main-navigation">
+        <button class="nav-item active" data-page="dashboard"><span>🏠</span>Accueil</button>
+        <button class="nav-item" data-page="subjects"><span>📚</span>Matières</button>
+        <button class="nav-item" data-page="materials"><span>📄</span>Mes cours</button>
+        <button class="nav-item" data-page="revisions"><span>🔄</span>Révisions</button>
+        <button class="nav-item" data-page="calendar"><span>📅</span>Calendrier</button>
+        <div class="nav-section-title">APPRENDRE</div>
+        <button class="nav-item" data-page="flashcards"><span>🃏</span>Flashcards</button>
+        <button class="nav-item" data-page="quiz"><span>❓</span>Quiz</button>
+        <button class="nav-item" data-page="lili"><span>🌸</span>Lili <b>AI</b></button>
+        <button class="nav-item" data-page="focus"><span>🎯</span>Focus</button>
+        <div class="nav-section-title">MON SUIVI</div>
+        <button class="nav-item" data-page="statistics"><span>📊</span>Statistiques</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-streak"><span>🔥</span><div><strong id="sidebar-streak">0 jour</strong><small>série actuelle</small></div></div>
+        <button class="profile-mini" data-page="profile"><div id="sidebar-avatar">🌸</div><div><strong id="sidebar-name">Élève</strong><small>Voir mon profil</small></div><span>›</span></button>
+      </div>
+    </aside>
+
+    <header class="mobile-header"><button id="mobile-menu-button" class="icon-button">☰</button><strong>🌸 STUDY PLANNER</strong><button class="icon-button" data-page="profile">👤</button></header>
+
+    <main class="content">
+      <section id="page-dashboard" class="page active-page">
+        <div class="page-header"><div><span class="page-eyebrow">TABLEAU DE BORD</span><h1 id="dashboard-greeting">Bonjour 🌸</h1><p class="page-subtitle">Voici ce qui t'attend aujourd'hui.</p></div><div class="header-date">📅 <div><strong id="current-day">Aujourd'hui</strong><small id="current-date"></small></div></div></div>
+        <div class="quick-stats-grid">
+          <div class="stat-card"><div class="stat-icon pink">📚</div><div><span>Matières</span><strong id="dashboard-subject-count">0</strong></div></div>
+          <div class="stat-card"><div class="stat-icon purple">🔄</div><div><span>À réviser</span><strong id="dashboard-revision-count">0</strong></div></div>
+          <div class="stat-card"><div class="stat-icon yellow">⭐</div><div><span>XP</span><strong id="dashboard-xp">0</strong></div></div>
+          <div class="stat-card"><div class="stat-icon orange">🔥</div><div><span>Série</span><strong id="dashboard-streak">0</strong></div></div>
+        </div>
+        <div class="dashboard-grid">
+          <div class="dashboard-main-column">
+            <div class="section-card"><div class="section-card-header"><div><span class="section-eyebrow">AUJOURD'HUI</span><h2>Tes révisions</h2></div><button class="link-button" data-page="revisions">Tout voir →</button></div><div id="today-revisions" class="revision-list"></div></div>
+            <div class="section-card"><div class="section-card-header"><div><span class="section-eyebrow">MES COURS</span><h2>Récemment ajoutés</h2></div><button class="link-button" data-page="materials">Tout voir →</button></div><div id="recent-materials" class="material-mini-grid"></div></div>
+          </div>
+          <div class="dashboard-side-column">
+            <div class="level-card"><div class="level-header"><div><span>NIVEAU</span><strong id="user-level">1</strong></div><div><strong id="level-current-xp">0 XP</strong><small>/ <span id="level-next-xp">100</span> XP</small></div></div><div class="xp-progress"><div id="xp-progress-bar"></div></div><p id="level-message">Commence ton aventure !</p></div>
+            <div class="section-card"><div class="section-card-header"><div><span class="section-eyebrow">PROGRESSION</span><h2>Maîtrise</h2></div><button class="link-button" data-page="statistics">Voir →</button></div><div id="dashboard-mastery"></div></div>
+            <div class="lili-mini-card"><div>🌸</div><div><strong>Lili est là 💕</strong><p id="lili-mini-message">Tu peux y arriver !</p><button class="link-button" data-page="lili">Parler à Lili →</button></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="page-subjects" class="page hidden"><div class="page-header"><div><span class="page-eyebrow">ORGANISATION</span><h1>Mes matières</h1><p class="page-subtitle">Organise tes cours par matière et chapitre.</p></div><button id="add-subject-button" class="primary-button">+ Ajouter une matière</button></div><div id="subjects-grid" class="subjects-grid"></div></section>
+
+      <section id="page-materials" class="page hidden"><div class="page-header"><div><span class="page-eyebrow">MES RESSOURCES</span><h1>Mes cours</h1><p class="page-subtitle">Retrouve tous tes cours et matériels.</p></div><button id="add-material-button" class="primary-button">+ Ajouter un cours</button></div>
+        <div class="filters-bar"><div class="search-wrapper">🔎<input id="material-search" placeholder="Rechercher un cours..."></div><select id="material-subject-filter"><option value="all">Toutes les matières</option></select><select id="material-type-filter"><option value="all">Tous les types</option><option value="course">📖 Cours</option><option value="notes">📝 Notes</option><option value="pdf">📄 PDF</option></select></div>
+        <div id="materials-grid" class="materials-grid"></div>
+      </section>
+
+      <section id="page-revisions" class="page hidden"><div class="page-header"><div><span class="page-eyebrow">RÉPÉTITION ESPACÉE</span><h1>Mes révisions</h1><p class="page-subtitle">Révise au bon moment pour mieux mémoriser.</p></div></div>
+        <div class="revision-overview"><div><span>🌸</span><strong id="revision-today-count">0</strong><small>Aujourd'hui</small></div><div><span>📅</span><strong id="revision-upcoming-count">0</strong><small>Cette semaine</small></div><div><span>✨</span><strong id="revision-completed-count">0</strong><small>Terminées</small></div></div>
+        <div class="section-card"><div class="section-card-header"><div><span class="section-eyebrow">PLANNING</span><h2>Ton programme</h2></div></div><div id="revision-full-list"></div></div>
+      </section>
+
+      <section id="page-calendar" class="page hidden"><div class="page-header"><div><span class="page-eyebrow">ORGANISATION</span><h1>Calendrier</h1><p class="page-subtitle">Visualise toutes tes révisions.</p></div></div><div class="calendar-layout"><div class="section-card"><div class="calendar-header"><button id="calendar-prev" class="icon-button">‹</button><h2 id="calendar-month"></h2><button id="calendar-next" class="icon-button">›</button></div><div class="calendar-weekdays"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div><div id="calendar-grid" class="calendar-grid"></div></div><div class="section-card"><span class="section-eyebrow">SÉLECTION</span><h2 id="selected-date-title">Aujourd'hui</h2><div id="selected-date-revisions"></div></div></div></section>
+
+      <section id="page-flashcards" class="page hidden"><div class="page-header"><div><span class="page-eyebrow">MÉMORISATION</span><h1>Flashcards</h1><p class="page-subtitle">Teste ta mémoire une carte à la fois.</p></div><button id="create-flashcard-button" class="primary-button">+ Créer des cartes</button></div><div id="flashcard-area"></div><div id="flashcard-decks" class="flashcard-decks"></div></section>
+
+      <section id="page-quiz" class="page hidden"><div class="page-header"><div><span class="page-eyebrow">TESTE-TOI</span><h1>Quiz</h1><p class="page-subtitle">Vérifie ce que tu as retenu.</p></div></div><div id="quiz-selection" class="quiz-start-card"><div class="quiz-start-icon">🧠</div><h2>Prêt(e) à te tester ?</h2><p>Choisis une matière et lance un quiz.</p><div class="quiz-options"><label>Matière<select id="quiz-subject"><option value="all">Toutes les matières</option></select></label><label>Difficulté<select id="quiz-difficulty"><option value="easy">Facile</option><option value="medium" selected>Intermédiaire</option><option value="hard">Difficile</option></select></label><label>Questions<select id="quiz-length"><option>5</option><option selected>10</option><option>15</option></select></label></div><button id="start-quiz-button" class="primary-button">Commencer le quiz 🚀</button></div><div id="quiz-area" class="quiz-area hidden"></div></section>
+
+      <section id="page-lili" class="page hidden"><div class="lili-hero"><div class="lili-large-avatar">🌸</div><div><span class="page-eyebrow">TON ASSISTANTE</span><h1>Bonjour, c'est Lili 💕</h1><p>Je suis là pour t'aider à apprendre et t'organiser.</p></div></div><div class="lili-chat-card"><div id="lili-messages" class="lili-messages"><div class="lili-message assistant"><div class="message-avatar">🌸</div><div class="message-bubble">Coucou 🌷 Je suis Lili ! Demande-moi quoi réviser, comment t'organiser ou comment utiliser l'application.</div></div></div><form id="lili-form" class="lili-input-area"><input id="lili-input" placeholder="Écris quelque chose à Lili..."><button>➤</button></form></div><div class="lili-suggestions"><button data-message="Que dois-je réviser aujourd'hui ?">📚 Que dois-je réviser ?</button><button data-message="Aide-moi à m'organiser.">📅 Aide-moi à m'organiser</button><button data-message="Comment fonctionne la répétition espacée ?">🧠 Explique-moi la répétition espacée</button></div></section>
+
+      <section id="page-focus" class="page hidden"><div class="page-header"><div><span class="page-eyebrow">CONCENTRATION</span><h1>Focus</h1><p class="page-subtitle">Une session à la fois. 🌷</p></div></div><div class="focus-container"><div class="focus-card"><span>SESSION DE FOCUS</span><div id="focus-timer">25:00</div><p id="focus-status">Prêt(e) à commencer ?</p><div><button id="focus-start" class="primary-button">Commencer</button><button id="focus-reset" class="secondary-button">Réinitialiser</button></div><div class="focus-presets"><button data-minutes="25" class="active">25 min</button><button data-minutes="45">45 min</button><button data-minutes="60">60 min</button></div></div><div class="section-card"><h2>🌸 Petit rappel</h2><ul><li>Mets ton téléphone de côté.</li><li>Choisis une seule tâche.</li><li>Fais une vraie pause ensuite.</li></ul></div></div></section>
+
+      <section id="page-statistics" class="page hidden"><div class="page-header"><div><span class="page-eyebrow">MON SUIVI</span><h1>Mes statistiques</h1><p class="page-subtitle">Observe tes progrès.</p></div></div><div class="statistics-summary"><div><span>⭐</span><strong id="stats-total-xp">0</strong><small>XP total</small></div><div><span>🔥</span><strong id="stats-best-streak">0</strong><small>Meilleure série</small></div><div><span>🧠</span><strong id="stats-quizzes">0</strong><small>Quiz réalisés</small></div><div><span>🔄</span><strong id="stats-revisions">0</strong><small>Révisions terminées</small></div></div><div class="statistics-grid"><div class="section-card"><span class="section-eyebrow">MATIÈRES</span><h2>Ma progression</h2><div id="subject-statistics"></div></div><div class="section-card"><span class="section-eyebrow">MAÎTRISE</span><h2>Répartition</h2><div id="mastery-statistics"></div></div></div></section>
+
+      <section id="page-profile" class="page hidden"><div class="page-header"><div><span class="page-eyebrow">MON ESPACE</span><h1>Mon profil</h1><p class="page-subtitle">Personnalise ton espace d'étude.</p></div></div><div class="profile-layout"><div class="profile-card section-card"><div id="profile-avatar" class="profile-avatar-large">🌸</div><h2 id="profile-display-name">Élève</h2><p id="profile-class">—</p><div class="profile-level">Niveau <strong id="profile-level">1</strong></div></div><div class="section-card"><span class="section-eyebrow">INFORMATIONS</span><h2>Mon profil</h2><form id="profile-form"><div class="form-row"><div class="form-group"><label>Prénom</label><input id="profile-first-name"></div><div class="form-group"><label>Nom d'affichage</label><input id="profile-display-name-input"></div></div><div class="form-group"><label>Classe</label><input id="profile-class-input"></div><div class="avatar-selection"><p class="form-label">Avatar</p><div id="profile-avatar-options" class="avatar-grid"><button type="button" class="avatar-option" data-avatar="🌸">🌸</button><button type="button" class="avatar-option" data-avatar="🌷">🌷</button><button type="button" class="avatar-option" data-avatar="🌼">🌼</button><button type="button" class="avatar-option" data-avatar="🦋">🦋</button><button type="button" class="avatar-option" data-avatar="🐰">🐰</button><button type="button" class="avatar-option" data-avatar="⭐">⭐</button></div></div><button class="primary-button">Enregistrer</button></form></div></div><div class="section-card danger-zone"><div><span class="section-eyebrow">SESSION</span><h2>Déconnexion</h2><p>Quitter ton espace actuel.</p></div><button id="logout-button" class="secondary-button danger-button">Se déconnecter</button></div></section>
+    </main>
+  </section>
+
+  <div id="modal-overlay" class="modal-overlay hidden"><div id="modal" class="modal"><button id="modal-close" class="modal-close">×</button><div id="modal-content"></div></div></div>
+  <div id="toast-container" class="toast-container"></div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
+
 
