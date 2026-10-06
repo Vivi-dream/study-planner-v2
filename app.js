@@ -5759,3 +5759,2730 @@ async function ensureMaterialChapter(
   return chapter;
 
 }
+/* =========================================================
+   PART 5 — DASHBOARD + REVISIONS + CALENDAR + TO-DO
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   MATERIAL ICON HELPER
+   --------------------------------------------------------- */
+
+function materialIcon(kind) {
+
+  const icons = {
+    notes: "📝",
+    pdf: "📄",
+    docx: "📘",
+    pptx: "📊",
+    image: "📸",
+    youtube: "▶️"
+  };
+
+  return (
+    icons[kind] ||
+    "📖"
+  );
+
+}
+
+
+/* ---------------------------------------------------------
+   MASTERY DISPLAY
+   --------------------------------------------------------- */
+
+function masteryRow(
+  label,
+  score
+) {
+
+  return `
+    <div class="mastery-row">
+
+      <div>
+
+        <span>
+          ${escapeHTML(
+            label
+          )}
+        </span>
+
+        <span>
+          ${score}%
+        </span>
+
+      </div>
+
+
+      <div class="mastery-bar">
+
+        <div
+          style="
+            width:${score}%;
+          "
+        ></div>
+
+      </div>
+
+    </div>
+  `;
+
+}
+
+
+/* ---------------------------------------------------------
+   DATE HELPERS
+   --------------------------------------------------------- */
+
+function formatDate(
+  dateString
+) {
+
+  if (!dateString) {
+    return "";
+  }
+
+  const date =
+    new Date(
+      `${dateString}T12:00:00`
+    );
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return dateString;
+
+  }
+
+  return `
+    ${String(
+      date.getDate()
+    ).padStart(2, "0")}/
+    ${String(
+      date.getMonth() + 1
+    ).padStart(2, "0")}/
+    ${date.getFullYear()}
+  `;
+}
+
+
+function formatLongDate(
+  dateString
+) {
+
+  if (!dateString) {
+    return "";
+  }
+
+  const date =
+    new Date(
+      `${dateString}T12:00:00`
+    );
+
+  return `
+    ${date.getDate()}
+    ${MONTHS[
+      date.getMonth()
+    ]}
+    ${date.getFullYear()}
+  `;
+
+}
+
+
+/* ---------------------------------------------------------
+   STREAK
+   --------------------------------------------------------- */
+
+function calculateStreak() {
+
+  const activeDates =
+    new Set();
+
+
+  /*
+    Completed revisions.
+  */
+
+  DATA.revisions
+    .filter(
+      revision =>
+        revision.completed &&
+        revision.completed_at
+    )
+    .forEach(
+      revision =>
+        activeDates.add(
+          revision.completed_at
+            .slice(0, 10)
+        )
+    );
+
+
+  /*
+    Completed tasks.
+  */
+
+  DATA.tasks
+    .filter(
+      task =>
+        task.completed &&
+        task.completed_at
+    )
+    .forEach(
+      task =>
+        activeDates.add(
+          task.completed_at
+            .slice(0, 10)
+        )
+    );
+
+
+  /*
+    Quiz activity.
+  */
+
+  DATA.quizAttempts
+    .filter(
+      quiz =>
+        quiz.created_at
+    )
+    .forEach(
+      quiz =>
+        activeDates.add(
+          quiz.created_at
+            .slice(0, 10)
+        )
+    );
+
+
+  let currentDate =
+    new Date(
+      `${today()}T12:00:00`
+    );
+
+
+  let streak = 0;
+
+
+  while (
+    activeDates.has(
+      currentDate
+        .toISOString()
+        .slice(0, 10)
+    )
+  ) {
+
+    streak++;
+
+    currentDate.setDate(
+      currentDate.getDate() - 1
+    );
+
+  }
+
+
+  return streak;
+
+}
+
+
+/* ---------------------------------------------------------
+   DASHBOARD
+   --------------------------------------------------------- */
+
+function renderDashboard() {
+
+  if (!profile) {
+    return;
+  }
+
+
+  const displayName =
+    profile.display_name ||
+    profile.first_name ||
+    "Élève";
+
+
+  /*
+    Greeting.
+  */
+
+  const greeting =
+    $("#dashboard-greeting");
+
+  if (greeting) {
+
+    greeting.textContent =
+      `Bonjour ${displayName} 🌸`;
+
+  }
+
+
+  /*
+    Main statistics.
+  */
+
+  const subjectCount =
+    $("#dashboard-subject-count");
+
+  const revisionCount =
+    $("#dashboard-revision-count");
+
+  const xpElement =
+    $("#dashboard-xp");
+
+  const streakElement =
+    $("#dashboard-streak");
+
+
+  if (subjectCount) {
+
+    subjectCount.textContent =
+      DATA.subjects.length;
+
+  }
+
+
+  if (revisionCount) {
+
+    revisionCount.textContent =
+      DATA.revisions.filter(
+        revision =>
+          !revision.completed &&
+          revision.scheduled_date <=
+            today()
+      ).length;
+
+  }
+
+
+  if (xpElement) {
+
+    xpElement.textContent =
+      totalXP();
+
+  }
+
+
+  if (streakElement) {
+
+    streakElement.textContent =
+      calculateStreak();
+
+  }
+
+
+  /*
+    Level.
+  */
+
+  const level =
+    currentLevel();
+
+  const levelElement =
+    $("#user-level");
+
+  if (levelElement) {
+
+    levelElement.textContent =
+      level;
+
+  }
+
+
+  const currentXP =
+    totalXP() % 100;
+
+
+  const currentXPElement =
+    $("#level-current-xp");
+
+  if (currentXPElement) {
+
+    currentXPElement.textContent =
+      `${currentXP} XP`;
+
+  }
+
+
+  const progress =
+    $("#xp-progress-bar");
+
+  if (progress) {
+
+    progress.style.width =
+      `${currentXP}%`;
+
+  }
+
+
+  const levelMessage =
+    $("#level-message");
+
+  if (levelMessage) {
+
+    const remaining =
+      100 - currentXP;
+
+    levelMessage.textContent =
+      `${remaining} XP avant le niveau ${level + 1}. ✨`;
+
+  }
+
+
+  /*
+    Today's revisions.
+  */
+
+  const revisionContainer =
+    $("#today-revisions");
+
+
+  if (revisionContainer) {
+
+    const revisions =
+      DATA.revisions
+        .filter(
+          revision =>
+            !revision.completed &&
+            revision.scheduled_date <=
+              today()
+        )
+        .sort(
+          (a, b) => {
+
+            if (
+              a.scheduled_date !==
+              b.scheduled_date
+            ) {
+
+              return (
+                a.scheduled_date.localeCompare(
+                  b.scheduled_date
+                )
+              );
+
+            }
+
+            return (
+              a.revision_number -
+              b.revision_number
+            );
+
+          }
+        )
+        .slice(
+          0,
+          7
+        );
+
+
+    revisionContainer.innerHTML =
+      revisions.length
+
+        ? revisions
+            .map(
+              revision =>
+                dashboardRevisionHTML(
+                  revision
+                )
+            )
+            .join("")
+
+        : `
+          <div class="empty-state">
+
+            <div
+              style="
+                font-size:40px;
+              "
+            >
+              🌷
+            </div>
+
+            <strong>
+              Tout est à jour !
+            </strong>
+
+            <span>
+              Aucune révision
+              urgente aujourd'hui.
+            </span>
+
+          </div>
+        `;
+
+  }
+
+
+  /*
+    Recent materials.
+  */
+
+  const recentContainer =
+    $("#recent-materials");
+
+
+  if (recentContainer) {
+
+    const recent =
+      [
+        ...DATA.materials
+      ]
+        .sort(
+          (a, b) =>
+            String(
+              b.created_at
+            ).localeCompare(
+              String(
+                a.created_at
+              )
+            )
+        )
+        .slice(
+          0,
+          6
+        );
+
+
+    recentContainer.innerHTML =
+      recent.length
+
+        ? recent
+            .map(
+              material => `
+                <div
+                  class="material-mini"
+                >
+
+                  <span>
+                    ${materialIcon(
+                      material.kind
+                    )}
+                  </span>
+
+
+                  <div>
+
+                    <strong>
+                      ${escapeHTML(
+                        material.title
+                      )}
+                    </strong>
+
+                    <small>
+                      ${escapeHTML(
+                        getSubject(
+                          material.subject_id
+                        )?.name ||
+                        ""
+                      )}
+                    </small>
+
+                  </div>
+
+                </div>
+              `
+            )
+            .join("")
+
+        : `
+          <div class="empty-state">
+            Aucun cours pour le moment.
+          </div>
+        `;
+
+  }
+
+
+  /*
+    Subject mastery.
+  */
+
+  const masteryContainer =
+    $("#dashboard-mastery");
+
+
+  if (masteryContainer) {
+
+    if (
+      !DATA.subjects.length
+    ) {
+
+      masteryContainer.innerHTML = `
+        <div class="empty-state">
+          Ajoute une matière pour voir
+          ta progression.
+        </div>
+      `;
+
+    } else {
+
+      masteryContainer.innerHTML =
+        DATA.subjects
+          .slice(
+            0,
+            6
+          )
+          .map(
+            subject => {
+
+              const materials =
+                DATA.materials.filter(
+                  material =>
+                    material.subject_id ===
+                    subject.id
+                );
+
+
+              const score =
+                materials.length
+
+                  ? Math.round(
+                      materials.reduce(
+                        (
+                          total,
+                          material
+                        ) =>
+                          total +
+                          calculateMastery(
+                            material.id
+                          ),
+                        0
+                      ) /
+                      materials.length
+                    )
+
+                  : 0;
+
+
+              return masteryRow(
+                `${subject.icon} ${subject.name}`,
+                score
+              );
+
+            }
+          )
+          .join("");
+
+    }
+
+  }
+
+
+  /*
+    Lili mini message.
+  */
+
+  const liliMessage =
+    $("#lili-mini-message");
+
+  if (liliMessage) {
+
+    const due =
+      DATA.revisions.filter(
+        revision =>
+          !revision.completed &&
+          revision.scheduled_date <=
+            today()
+      ).length;
+
+
+    liliMessage.textContent =
+      due
+
+        ? `Tu as ${due} révision${
+            due > 1
+              ? "s"
+              : ""
+          } à faire aujourd'hui.`
+
+        : "Tout est à jour. Que veux-tu préparer ?";
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   DASHBOARD REVISION CARD
+   --------------------------------------------------------- */
+
+function dashboardRevisionHTML(
+  revision
+) {
+
+  const material =
+    getMaterial(
+      revision.material_id
+    );
+
+
+  if (!material) {
+    return "";
+  }
+
+
+  const overdue =
+    revision.scheduled_date <
+      today();
+
+
+  return `
+    <div
+      class="
+        revision-item
+        ${
+          overdue
+            ? "overdue"
+            : ""
+        }
+      "
+    >
+
+      <div
+        class="revision-dot"
+      ></div>
+
+
+      <div
+        class="revision-copy"
+      >
+
+        <strong>
+          ${materialIcon(
+            material.kind
+          )}
+
+          ${escapeHTML(
+            material.title
+          )}
+        </strong>
+
+
+        <small>
+
+          ${
+            overdue
+              ? "En retard · "
+              : ""
+          }
+
+          ${
+            revision.scheduled_date ===
+            today()
+
+              ? "Aujourd'hui"
+
+              : formatDate(
+                  revision.scheduled_date
+                )
+          }
+
+          ·
+          Étape
+          ${revision.revision_number}/4
+
+        </small>
+
+      </div>
+
+
+      <button
+        class="small-button"
+        onclick="
+          startRevision(
+            '${revision.id}'
+          )
+        "
+      >
+        Réviser
+      </button>
+
+    </div>
+  `;
+
+}
+
+
+/* ---------------------------------------------------------
+   COMPLETE REVISION
+   --------------------------------------------------------- */
+
+window.startRevision =
+function (
+  revisionId
+) {
+
+  const revision =
+    DATA.revisions.find(
+      item =>
+        item.id ===
+        revisionId
+    );
+
+
+  if (!revision) {
+    return;
+  }
+
+
+  const material =
+    getMaterial(
+      revision.material_id
+    );
+
+
+  if (!material) {
+    return;
+  }
+
+
+  const cards =
+    DATA.flashcards.filter(
+      card =>
+        card.material_id ===
+        material.id
+    );
+
+
+  openModal(`
+
+    <span class="eyebrow">
+      RÉVISION
+      ${revision.revision_number}/4
+    </span>
+
+
+    <h2>
+      ${escapeHTML(
+        material.title
+      )}
+    </h2>
+
+
+    <p>
+      Prévue le
+      ${formatLongDate(
+        revision.scheduled_date
+      )}
+    </p>
+
+
+    ${masteryRow(
+      masteryLabel(
+        calculateMastery(
+          material.id
+        )
+      ),
+      calculateMastery(
+        material.id
+      )
+    )}
+
+
+    <div
+      class="material-content"
+    >
+
+      ${escapeHTML(
+        material.notes ||
+        material.raw_text ||
+        ""
+      ).replace(
+        /\n/g,
+        "<br>"
+      )}
+
+    </div>
+
+
+    <div
+      class="modal-actions"
+    >
+
+      <button
+        class="btn primary"
+        onclick="
+          finishRevision(
+            '${revision.id}',
+            'easy'
+          )
+        "
+      >
+        Je maîtrise 👍
+      </button>
+
+
+      <button
+        class="btn soft"
+        onclick="
+          finishRevision(
+            '${revision.id}',
+            'medium'
+          )
+        "
+      >
+        Encore un peu 🌷
+      </button>
+
+
+      <button
+        class="btn soft"
+        onclick="
+          finishRevision(
+            '${revision.id}',
+            'hard'
+          )
+        "
+      >
+        À renforcer 🧠
+      </button>
+
+
+      ${
+        cards.length
+
+          ? `
+            <button
+              class="btn soft"
+              onclick="
+                startMaterialFlashcards(
+                  '${material.id}'
+                );
+                closeModal();
+              "
+            >
+              🃏
+              ${cards.length}
+              flashcards
+            </button>
+          `
+
+          : ""
+      }
+
+    </div>
+
+  `);
+
+};
+
+
+/* ---------------------------------------------------------
+   FINISH REVISION
+   --------------------------------------------------------- */
+
+window.finishRevision =
+async function (
+  revisionId,
+  result
+) {
+
+  const revision =
+    DATA.revisions.find(
+      item =>
+        item.id ===
+        revisionId
+    );
+
+
+  if (
+    !revision ||
+    revision.completed
+  ) {
+
+    return;
+
+  }
+
+
+  const material =
+    getMaterial(
+      revision.material_id
+    );
+
+
+  if (!material) {
+    return;
+  }
+
+
+  try {
+
+    /*
+      Complete the current revision.
+    */
+
+    await updateRow(
+      "revisions",
+      revisionId,
+      {
+
+        completed:
+          true,
+
+        result:
+          result,
+
+        completed_at:
+          new Date()
+            .toISOString()
+
+      }
+    );
+
+
+    /*
+      Move to the next stage.
+
+      Important:
+      The next revision is calculated
+      from the day the student actually
+      did the revision.
+
+      This is better than keeping an
+      old date when a student was late.
+    */
+
+    if (
+      revision.revision_number < 4
+    ) {
+
+      const nextNumber =
+        revision.revision_number + 1;
+
+
+      const nextDate =
+        addDays(
+          today(),
+          REVISION_DELAYS[
+            nextNumber - 1
+          ]
+        );
+
+
+      /*
+        Make sure we don't create
+        duplicates.
+      */
+
+      const alreadyExists =
+        DATA.revisions.some(
+          item =>
+            item.material_id ===
+              material.id &&
+            item.revision_number ===
+              nextNumber &&
+            !item.completed
+        );
+
+
+      if (
+        !alreadyExists
+      ) {
+
+        await insertRow(
+          "revisions",
+          {
+
+            user_id:
+              session.user.id,
+
+            material_id:
+              material.id,
+
+            revision_number:
+              nextNumber,
+
+            scheduled_date:
+              nextDate,
+
+            completed:
+              false
+
+          }
+        );
+
+      }
+
+    }
+
+
+    closeModal();
+
+
+    await refreshData();
+
+
+    toast(
+      result === "easy"
+
+        ? "Révision maîtrisée · +15 XP ✨"
+
+        : result === "medium"
+
+        ? "Révision terminée · continue comme ça 🌷"
+
+        : "Révision terminée · cette notion mérite encore un peu d'attention 🧠"
+    );
+
+
+  } catch (error) {
+
+    handleAuthError(
+      error
+    );
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   REVISIONS PAGE
+   --------------------------------------------------------- */
+
+function renderRevisions() {
+
+  const todayCount =
+    DATA.revisions.filter(
+      revision =>
+        !revision.completed &&
+        revision.scheduled_date ===
+          today()
+    ).length;
+
+
+  const weekEnd =
+    addDays(
+      today(),
+      7
+    );
+
+
+  const weekCount =
+    DATA.revisions.filter(
+      revision =>
+        !revision.completed &&
+        revision.scheduled_date >=
+          today() &&
+        revision.scheduled_date <=
+          weekEnd
+    ).length;
+
+
+  const completedCount =
+    DATA.revisions.filter(
+      revision =>
+        revision.completed
+    ).length;
+
+
+  if (
+    $("#revision-today-count")
+  ) {
+
+    $("#revision-today-count")
+      .textContent =
+      todayCount;
+
+  }
+
+
+  if (
+    $("#revision-week-count")
+  ) {
+
+    $("#revision-week-count")
+      .textContent =
+      weekCount;
+
+  }
+
+
+  if (
+    $("#revision-completed-count")
+  ) {
+
+    $("#revision-completed-count")
+      .textContent =
+      completedCount;
+
+  }
+
+
+  const container =
+    $("#revision-full-list");
+
+
+  if (!container) {
+    return;
+  }
+
+
+  const sorted =
+    [
+      ...DATA.revisions
+    ].sort(
+      (a, b) => {
+
+        const dateCompare =
+          a.scheduled_date.localeCompare(
+            b.scheduled_date
+          );
+
+
+        if (
+          dateCompare !== 0
+        ) {
+
+          return dateCompare;
+
+        }
+
+
+        return (
+          a.revision_number -
+          b.revision_number
+        );
+
+      }
+    );
+
+
+  if (!sorted.length) {
+
+    container.innerHTML = `
+      <div class="empty-state">
+
+        <div
+          style="
+            font-size:45px;
+          "
+        >
+          🌷
+        </div>
+
+        <strong>
+          Aucune révision
+        </strong>
+
+        <span>
+          Tes révisions apparaîtront
+          ici dès qu'un cours sera ajouté.
+        </span>
+
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  const groups =
+    new Map();
+
+
+  sorted.forEach(
+    revision => {
+
+      if (
+        !groups.has(
+          revision.scheduled_date
+        )
+      ) {
+
+        groups.set(
+          revision.scheduled_date,
+          []
+        );
+
+      }
+
+      groups
+        .get(
+          revision.scheduled_date
+        )
+        .push(
+          revision
+        );
+
+    }
+  );
+
+
+  container.innerHTML =
+    [
+      ...groups.entries()
+    ]
+      .map(
+        (
+          [
+            date,
+            revisions
+          ]
+        ) => `
+
+          <div
+            style="
+              margin-bottom:20px;
+            "
+          >
+
+            <div
+              class="eyebrow"
+              style="
+                margin-bottom:8px;
+              "
+            >
+
+              ${
+                date ===
+                today()
+
+                  ? "AUJOURD'HUI"
+
+                  : date < today()
+
+                  ? `
+                    EN RETARD ·
+                    ${formatDate(
+                      date
+                    )}
+                  `
+
+                  : formatDate(
+                      date
+                    )
+              }
+
+            </div>
+
+
+            ${revisions
+              .map(
+                dashboardRevisionHTML
+              )
+              .join("")}
+
+          </div>
+
+        `
+      )
+      .join("");
+
+}
+
+
+/* ---------------------------------------------------------
+   CALENDAR
+   --------------------------------------------------------- */
+
+function renderCalendar() {
+
+  const year =
+    calendarDate.getFullYear();
+
+  const month =
+    calendarDate.getMonth();
+
+
+  const title =
+    $("#calendar-month");
+
+
+  const grid =
+    $("#calendar-grid");
+
+
+  if (
+    !title ||
+    !grid
+  ) {
+
+    return;
+
+  }
+
+
+  title.textContent =
+    `${MONTHS[month]} ${year}`;
+
+
+  const firstDay =
+    new Date(
+      year,
+      month,
+      1
+    );
+
+
+  const lastDay =
+    new Date(
+      year,
+      month + 1,
+      0
+    );
+
+
+  /*
+    Convert Sunday-first JS dates
+    to Monday-first calendar.
+  */
+
+  const startingOffset =
+    (
+      firstDay.getDay() +
+      6
+    ) % 7;
+
+
+  let html =
+    "";
+
+
+  for (
+    let i = 0;
+    i <
+    startingOffset;
+    i++
+  ) {
+
+    html += `
+      <div
+        class="calendar-day empty"
+      ></div>
+    `;
+
+  }
+
+
+  for (
+    let day = 1;
+    day <=
+      lastDay.getDate();
+    day++
+  ) {
+
+    const date =
+      `${year}-${
+        String(
+          month + 1
+        ).padStart(
+          2,
+          "0"
+        )
+      }-${
+        String(
+          day
+        ).padStart(
+          2,
+          "0"
+        )
+      }`;
+
+
+    const events =
+      DATA.events.filter(
+        event =>
+          event.event_date ===
+          date
+      );
+
+
+    const revisions =
+      DATA.revisions.filter(
+        revision =>
+          revision.scheduled_date ===
+            date &&
+          !revision.completed
+      );
+
+
+    const count =
+      events.length +
+      revisions.length;
+
+
+    const classes = [
+
+      date === today()
+        ? "today"
+        : "",
+
+      date ===
+        selectedCalendarDate
+        ? "selected"
+        : ""
+
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+
+    html += `
+
+      <button
+        type="button"
+        class="
+          calendar-day
+          ${classes}
+        "
+        onclick="
+          selectCalendarDate(
+            '${date}'
+          )
+        "
+      >
+
+        <span>
+          ${day}
+        </span>
+
+
+        ${
+          count
+
+            ? `
+              <b>
+                ${count}
+              </b>
+            `
+
+            : ""
+        }
+
+      </button>
+
+    `;
+
+  }
+
+
+  grid.innerHTML =
+    html;
+
+
+  renderSelectedCalendarDay();
+
+}
+
+
+/* ---------------------------------------------------------
+   SELECT CALENDAR DAY
+   --------------------------------------------------------- */
+
+window.selectCalendarDate =
+function (
+  date
+) {
+
+  selectedCalendarDate =
+    date;
+
+
+  renderCalendar();
+
+};
+
+
+/* ---------------------------------------------------------
+   SELECTED CALENDAR DAY
+   --------------------------------------------------------- */
+
+function renderSelectedCalendarDay() {
+
+  const title =
+    $("#selected-date-title");
+
+
+  const container =
+    $("#selected-day-events");
+
+
+  if (
+    !title ||
+    !container
+  ) {
+
+    return;
+
+  }
+
+
+  title.textContent =
+    selectedCalendarDate ===
+      today()
+
+      ? "Aujourd'hui"
+
+      : formatLongDate(
+          selectedCalendarDate
+        );
+
+
+  const events =
+    DATA.events.filter(
+      event =>
+        event.event_date ===
+        selectedCalendarDate
+    );
+
+
+  const revisions =
+    DATA.revisions.filter(
+      revision =>
+        revision.scheduled_date ===
+        selectedCalendarDate
+    );
+
+
+  let items =
+    "";
+
+
+  events.forEach(
+    event => {
+
+      items += `
+
+        <div
+          class="event-item"
+        >
+
+          <strong>
+
+            ${calendarEventIcon(
+              event.event_type
+            )}
+
+            ${escapeHTML(
+              event.title
+            )}
+
+          </strong>
+
+
+          <small>
+
+            ${escapeHTML(
+              event.event_type
+            )}
+
+
+            ${
+              event.event_time
+                ? ` · ${escapeHTML(
+                    event.event_time
+                  )}`
+                : ""
+            }
+
+
+            ${
+              event.notes
+                ? ` · ${escapeHTML(
+                    event.notes
+                  )}`
+                : ""
+            }
+
+          </small>
+
+
+          <button
+            class="mini-action"
+            onclick="
+              deleteCalendarEvent(
+                '${event.id}'
+              )
+            "
+          >
+            Supprimer
+          </button>
+
+        </div>
+
+      `;
+
+    }
+  );
+
+
+  revisions.forEach(
+    revision => {
+
+      const material =
+        getMaterial(
+          revision.material_id
+        );
+
+
+      if (!material) {
+        return;
+      }
+
+
+      items += `
+
+        <div
+          class="event-item"
+        >
+
+          <strong>
+
+            🔄
+            ${escapeHTML(
+              material.title
+            )}
+
+          </strong>
+
+
+          <small>
+
+            Révision
+            ${revision.revision_number}/4
+
+          </small>
+
+        </div>
+
+      `;
+
+    }
+  );
+
+
+  container.innerHTML =
+    items ||
+
+    `
+      <div class="empty-state">
+
+        Rien de prévu ce jour. 🌷
+
+      </div>
+    `;
+
+}
+
+
+/* ---------------------------------------------------------
+   CALENDAR EVENT ICON
+   --------------------------------------------------------- */
+
+function calendarEventIcon(
+  type
+) {
+
+  const icons = {
+
+    test:
+      "📝",
+
+    exam:
+      "🎓",
+
+    deadline:
+      "⏰",
+
+    homework:
+      "📚",
+
+    other:
+      "📌"
+
+  };
+
+
+  return (
+    icons[type] ||
+    "📌"
+  );
+
+}
+
+
+/* ---------------------------------------------------------
+   ADD CALENDAR EVENT
+   --------------------------------------------------------- */
+
+window.openAddEvent =
+function () {
+
+  openModal(`
+
+    <span class="eyebrow">
+      CALENDRIER
+    </span>
+
+
+    <h2>
+      Nouvel événement 📅
+    </h2>
+
+
+    <form
+      id="calendar-event-form"
+      class="form-stack"
+    >
+
+      <label>
+
+        Titre
+
+        <input
+          id="event-title"
+          placeholder="Ex. Contrôle de maths"
+          required
+        >
+
+      </label>
+
+
+      <div class="two">
+
+        <label>
+
+          Date
+
+          <input
+            id="event-date"
+            type="date"
+            value="${selectedCalendarDate}"
+            required
+          >
+
+        </label>
+
+
+        <label>
+
+          Heure
+
+          <input
+            id="event-time"
+            type="time"
+          >
+
+        </label>
+
+      </div>
+
+
+      <label>
+
+        Type
+
+        <select
+          id="event-type"
+        >
+
+          <option value="test">
+            📝 Test
+          </option>
+
+          <option value="exam">
+            🎓 Examen
+          </option>
+
+          <option value="deadline">
+            ⏰ Deadline
+          </option>
+
+          <option value="homework">
+            📚 Devoir
+          </option>
+
+          <option value="other">
+            📌 Autre
+          </option>
+
+        </select>
+
+      </label>
+
+
+      <label>
+
+        Notes
+
+        <textarea
+          id="event-notes"
+          rows="4"
+          placeholder="Salle, chapitre, consignes..."
+        ></textarea>
+
+      </label>
+
+
+      <button
+        class="btn primary"
+      >
+        Ajouter au calendrier
+      </button>
+
+    </form>
+
+  `);
+
+
+  $(
+    "#calendar-event-form"
+  ).onsubmit =
+    async event => {
+
+      event.preventDefault();
+
+
+      try {
+
+        await insertRow(
+          "calendar_events",
+          {
+
+            user_id:
+              session.user.id,
+
+            title:
+              $(
+                "#event-title"
+              )
+                .value
+                .trim(),
+
+            event_date:
+              $(
+                "#event-date"
+              )
+                .value,
+
+            event_time:
+              $(
+                "#event-time"
+              )
+                .value ||
+              null,
+
+            event_type:
+              $(
+                "#event-type"
+              )
+                .value,
+
+            notes:
+              $(
+                "#event-notes"
+              )
+                .value
+                .trim() ||
+              null
+
+          }
+        );
+
+
+        closeModal();
+
+        await refreshData();
+
+        renderCalendar();
+
+        toast(
+          "Événement ajouté 📅"
+        );
+
+
+      } catch (error) {
+
+        handleAuthError(
+          error
+        );
+
+      }
+
+    };
+
+};
+
+
+/* ---------------------------------------------------------
+   DELETE CALENDAR EVENT
+   --------------------------------------------------------- */
+
+window.deleteCalendarEvent =
+async function (
+  eventId
+) {
+
+  if (
+    !confirm(
+      "Supprimer cet événement ?"
+    )
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    await deleteRow(
+      "calendar_events",
+      eventId
+    );
+
+
+    await refreshData();
+
+    renderCalendar();
+
+
+    toast(
+      "Événement supprimé"
+    );
+
+
+  } catch (error) {
+
+    handleAuthError(
+      error
+    );
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   TO-DO LIST
+   --------------------------------------------------------- */
+
+function renderTasks() {
+
+  const todayDate =
+    today();
+
+
+  const weekEnd =
+    addDays(
+      todayDate,
+      7
+    );
+
+
+  const todayTasks =
+    DATA.tasks
+      .filter(
+        task =>
+          task.due_date ===
+          todayDate
+      )
+      .sort(
+        task =>
+          task.completed
+            ? 1
+            : -1
+      );
+
+
+  const weekTasks =
+    DATA.tasks
+      .filter(
+        task =>
+          task.due_date >
+            todayDate &&
+          task.due_date <=
+            weekEnd
+      )
+      .sort(
+        (a,b) =>
+          a.due_date.localeCompare(
+            b.due_date
+          )
+      );
+
+
+  const todayContainer =
+    $("#tasks-today");
+
+
+  if (todayContainer) {
+
+    todayContainer.innerHTML =
+      todayTasks.length
+
+        ? todayTasks
+            .map(
+              taskHTML
+            )
+            .join("")
+
+        : `
+          <div class="empty-state">
+
+            Aucune tâche
+            pour aujourd'hui. 🌷
+
+          </div>
+        `;
+
+  }
+
+
+  const weekContainer =
+    $("#tasks-week");
+
+
+  if (weekContainer) {
+
+    weekContainer.innerHTML =
+      weekTasks.length
+
+        ? weekTasks
+            .map(
+              taskHTML
+            )
+            .join("")
+
+        : `
+          <div class="empty-state">
+
+            Aucune tâche
+            à venir cette semaine.
+
+          </div>
+        `;
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   TASK HTML
+   --------------------------------------------------------- */
+
+function taskHTML(
+  task
+) {
+
+  return `
+
+    <div
+      class="
+        task-item
+        ${
+          task.completed
+            ? "done"
+            : ""
+        }
+      "
+    >
+
+      <input
+        class="task-check"
+        type="checkbox"
+        ${
+          task.completed
+            ? "checked"
+            : ""
+        }
+        onchange="
+          toggleTask(
+            '${task.id}',
+            this.checked
+          )
+        "
+      >
+
+
+      <span
+        class="task-title"
+      >
+        ${escapeHTML(
+          task.title
+        )}
+      </span>
+
+
+      <span
+        class="task-date"
+      >
+        ${escapeHTML(
+          task.due_date
+        )}
+      </span>
+
+
+      <button
+        class="mini-action"
+        onclick="
+          deleteTask(
+            '${task.id}'
+          )
+        "
+      >
+        ×
+      </button>
+
+    </div>
+
+  `;
+
+}
+
+
+/* ---------------------------------------------------------
+   ADD TASK
+   --------------------------------------------------------- */
+
+window.openAddTask =
+function () {
+
+  openModal(`
+
+    <span class="eyebrow">
+      TO-DO
+    </span>
+
+
+    <h2>
+      Nouvelle tâche ✓
+    </h2>
+
+
+    <form
+      id="task-form"
+      class="form-stack"
+    >
+
+      <label>
+
+        Tâche
+
+        <input
+          id="task-title"
+          placeholder="Ex. Revoir le chapitre 2"
+          required
+        >
+
+      </label>
+
+
+      <label>
+
+        Pour le
+
+        <input
+          id="task-date"
+          type="date"
+          value="${today()}"
+          required
+        >
+
+      </label>
+
+
+      <button
+        class="btn primary"
+      >
+        Ajouter la tâche
+      </button>
+
+    </form>
+
+  `);
+
+
+  $(
+    "#task-form"
+  ).onsubmit =
+    async event => {
+
+      event.preventDefault();
+
+
+      const title =
+        $(
+          "#task-title"
+        )
+          .value
+          .trim();
+
+
+      const dueDate =
+        $(
+          "#task-date"
+        )
+          .value;
+
+
+      if (!title) {
+
+        return;
+
+      }
+
+
+      try {
+
+        await insertRow(
+          "tasks",
+          {
+
+            user_id:
+              session.user.id,
+
+            title:
+              title,
+
+            due_date:
+              dueDate,
+
+            completed:
+              false
+
+          }
+        );
+
+
+        closeModal();
+
+        await refreshData();
+
+        toast(
+          "Tâche ajoutée ✓"
+        );
+
+
+      } catch (error) {
+
+        handleAuthError(
+          error
+        );
+
+      }
+
+    };
+
+};
+
+
+/* ---------------------------------------------------------
+   TOGGLE TASK
+   --------------------------------------------------------- */
+
+window.toggleTask =
+async function (
+  taskId,
+  completed
+) {
+
+  try {
+
+    await updateRow(
+      "tasks",
+      taskId,
+      {
+
+        completed:
+          completed,
+
+        completed_at:
+          completed
+
+            ? new Date()
+                .toISOString()
+
+            : null
+
+      }
+    );
+
+
+    await refreshData();
+
+
+    toast(
+      completed
+        ? "Tâche terminée · +3 XP ✨"
+        : "Tâche rouverte"
+    );
+
+
+  } catch (error) {
+
+    handleAuthError(
+      error
+    );
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   DELETE TASK
+   --------------------------------------------------------- */
+
+window.deleteTask =
+async function (
+  taskId
+) {
+
+  try {
+
+    await deleteRow(
+      "tasks",
+      taskId
+    );
+
+
+    await refreshData();
+
+    toast(
+      "Tâche supprimée"
+    );
+
+
+  } catch (error) {
+
+    handleAuthError(
+      error
+    );
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   REFRESH DASHBOARD + CURRENT PAGE
+   --------------------------------------------------------- */
+
+async function refreshEverything() {
+
+  try {
+
+    await loadAllData();
+
+    renderAll();
+
+  } catch (error) {
+
+    handleAuthError(
+      error
+    );
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   SAFE NAVIGATION
+   --------------------------------------------------------- */
+
+window.navigate =
+function (
+  page
+) {
+
+  activePage =
+    page;
+
+
+  $$(".page")
+    .forEach(
+      section =>
+        section.classList.add(
+          "hidden"
+        )
+    );
+
+
+  const target =
+    $(
+      `#page-${page}`
+    );
+
+
+  if (!target) {
+
+    return;
+
+  }
+
+
+  target.classList.remove(
+    "hidden"
+  );
+
+
+  $$(".nav-item")
+    .forEach(
+      button =>
+        button.classList.toggle(
+          "active",
+          button.dataset.page ===
+            page
+        )
+    );
+
+
+  if (
+    page ===
+    "dashboard"
+  ) {
+
+    renderDashboard();
+
+  }
+
+
+  if (
+    page ===
+    "subjects"
+  ) {
+
+    renderSubjects();
+
+  }
+
+
+  if (
+    page ===
+    "materials"
+  ) {
+
+    renderMaterials();
+
+  }
+
+
+  if (
+    page ===
+    "revisions"
+  ) {
+
+    renderRevisions();
+
+  }
+
+
+  if (
+    page ===
+    "calendar"
+  ) {
+
+    renderCalendar();
+
+  }
+
+
+  if (
+    page ===
+    "tasks"
+  ) {
+
+    renderTasks();
+
+  }
+
+
+  if (
+    page ===
+    "flashcards"
+  ) {
+
+    renderFlashcards();
+
+  }
+
+
+  if (
+    page ===
+    "quiz"
+  ) {
+
+    renderQuizOptions();
+
+  }
+
+
+  if (
+    page ===
+    "lili"
+  ) {
+
+    renderLili();
+
+  }
+
+
+  if (
+    page ===
+    "study-ai"
+  ) {
+
+    renderStudyAI();
+
+  }
+
+
+  if (
+    page ===
+    "focus"
+  ) {
+
+    renderFocus();
+
+  }
+
+
+  if (
+    page ===
+    "statistics"
+  ) {
+
+    renderStats();
+
+  }
+
+
+  if (
+    page ===
+    "rewards"
+  ) {
+
+    renderRewards();
+
+  }
+
+
+  if (
+    page ===
+    "friends"
+  ) {
+
+    renderFriends();
+
+  }
+
+
+  if (
+    page ===
+    "profile"
+  ) {
+
+    renderProfile();
+
+  }
+
+
+  $(".sidebar")
+    ?.classList.remove(
+      "open"
+    );
+
+};
+
+
+/* ---------------------------------------------------------
+   RENDER EVERYTHING
+   --------------------------------------------------------- */
+
+function renderAll() {
+
+  renderDate();
+
+  renderTopUser();
+
+  renderDashboard();
+
+  renderSubjects();
+
+  renderMaterials();
+
+  renderRevisions();
+
+  renderCalendar();
+
+  renderTasks();
+
+  renderFlashcards();
+
+  renderQuizOptions();
+
+  renderLili();
+
+  renderStudyAI();
+
+  renderFocus();
+
+  renderStats();
+
+  renderRewards();
+
+  renderFriends();
+
+  renderProfile();
+
+}
+
+
+/* ---------------------------------------------------------
+   HEADER DATE
+   --------------------------------------------------------- */
+
+function renderDate() {
+
+  const date =
+    new Date();
+
+
+  const day =
+    $("#current-day");
+
+
+  const dateText =
+    $("#current-date");
+
+
+  if (day) {
+
+    day.textContent =
+      DAYS[
+        date.getDay()
+      ];
+
+  }
+
+
+  if (dateText) {
+
+    dateText.textContent =
+      `
+        ${date.getDate()}
+        ${
+          MONTHS[
+            date.getMonth()
+          ]
+        }
+        ${
+          date.getFullYear()
+        }
+      `;
+
+  }
+
+}
