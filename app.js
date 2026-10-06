@@ -16300,3 +16300,1656 @@ if (document.readyState === "loading") {
 } else {
   initialiserApplication();
 }
+/* =========================================================
+   AMELIORATIONS — FICHIERS DE LEÇON + EDITEUR + LANGUES
+   ========================================================= */
+
+/* =========================================================
+   1. TYPES DE FICHIERS
+   ========================================================= */
+
+const TYPES_FICHIERS_ETUDE = {
+  notes: {
+    label: "Notes",
+    icon: "📝"
+  },
+
+  resume_detaille: {
+    label: "Résumé détaillé",
+    icon: "📚"
+  },
+
+  resume_examen: {
+    label: "Résumé pour l'examen",
+    icon: "🎯"
+  },
+
+  flashcards: {
+    label: "Flashcards",
+    icon: "🧠"
+  },
+
+  quiz: {
+    label: "Quiz",
+    icon: "❓"
+  },
+
+  test: {
+    label: "Test",
+    icon: "📝"
+  },
+
+  mindmap: {
+    label: "Carte mentale",
+    icon: "🗺️"
+  },
+
+  podcast: {
+    label: "Podcast",
+    icon: "🎧"
+  }
+};
+
+
+const ICONES_FICHIERS = {
+  notes: "📝",
+  resume_detaille: "📚",
+  resume_examen: "🎯",
+  flashcards: "🧠",
+  quiz: "❓",
+  test: "📝",
+  mindmap: "🗺️",
+  podcast: "🎧",
+  pdf: "📄",
+  word: "📘",
+  powerpoint: "📊",
+  image: "🖼️",
+  youtube: "▶️"
+};
+
+
+/* =========================================================
+   2. OUTILS HTML
+   ========================================================= */
+
+function nettoyerHTML(html) {
+  const template = document.createElement("template");
+  template.innerHTML = html || "";
+
+  const elements = template.content.querySelectorAll("*");
+
+  elements.forEach((element) => {
+    const attributs = [...element.attributes];
+
+    attributs.forEach((attribut) => {
+      const nom = attribut.name.toLowerCase();
+      const valeur = attribut.value;
+
+      /* Suppression des attributs dangereux */
+      if (
+        nom.startsWith("on") ||
+        nom === "srcdoc" ||
+        nom === "formaction"
+      ) {
+        element.removeAttribute(attribut.name);
+        return;
+      }
+
+      if (
+        (nom === "href" || nom === "src") &&
+        valeur.toLowerCase().startsWith("javascript:")
+      ) {
+        element.removeAttribute(attribut.name);
+      }
+    });
+
+    /* On ne conserve que les balises utiles à l'étude */
+    const balisesAutorisees = [
+      "P",
+      "BR",
+      "STRONG",
+      "B",
+      "EM",
+      "I",
+      "U",
+      "MARK",
+      "H2",
+      "H3",
+      "UL",
+      "OL",
+      "LI",
+      "BLOCKQUOTE",
+      "SPAN",
+      "DIV"
+    ];
+
+    if (!balisesAutorisees.includes(element.tagName)) {
+      const fragment = document.createDocumentFragment();
+
+      while (element.firstChild) {
+        fragment.appendChild(element.firstChild);
+      }
+
+      element.replaceWith(fragment);
+    }
+  });
+
+  return template.innerHTML;
+}
+
+
+function texteVersHTML(texte) {
+  if (!texte) return "<p></p>";
+
+  const lignes = String(texte)
+    .split(/\r?\n/)
+    .map((ligne) => ligne.trim())
+    .filter(Boolean);
+
+  if (!lignes.length) return "<p></p>";
+
+  return lignes
+    .map((ligne) => `<p>${escapeHTML(ligne)}</p>`)
+    .join("");
+}
+
+
+/* =========================================================
+   3. CREER UN FICHIER DANS UNE LEÇON
+   ========================================================= */
+
+async function creerFichierEtude({
+  chapterId,
+  title,
+  type,
+  content,
+  sourceMaterialId = null
+}) {
+  if (!utilisateurActuel) {
+    throw new Error("Utilisateur non connecté.");
+  }
+
+  if (!chapterId) {
+    throw new Error("Aucune leçon/chapter sélectionné.");
+  }
+
+  const contenuFinal =
+    typeof content === "string"
+      ? nettoyerHTML(content)
+      : JSON.stringify(content, null, 2);
+
+  const { data, error } = await supabaseClient
+    .from("materiels")
+    .insert({
+      user_id: utilisateurActuel.id,
+      chapitre_id: chapterId,
+      type,
+      titre: title,
+      contenu: contenuFinal
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Erreur création fichier :", error);
+    throw error;
+  }
+
+  DATA.materials.push(data);
+
+  await renderMaterials();
+
+  toast(`"${title}" a été enregistré dans la leçon.`, "success");
+
+  return data;
+}
+
+
+/* =========================================================
+   4. TROUVER LA LEÇON D'UN MATÉRIEL
+   ========================================================= */
+
+function trouverChapitreDuMateriel(material) {
+  if (!material) return null;
+
+  return (
+    DATA.chapters.find(
+      (chapter) => chapter.id === material.chapitre_id
+    ) || null
+  );
+}
+
+
+/* =========================================================
+   5. EDITEUR RICHE
+   ========================================================= */
+
+function executerFormatEditeur(commande, valeur = null) {
+  const editor = document.getElementById("rich-material-editor");
+
+  if (!editor) return;
+
+  editor.focus();
+
+  try {
+    document.execCommand(commande, false, valeur);
+  } catch (error) {
+    console.error("Erreur formatage :", error);
+  }
+}
+
+
+function insererSurlignage() {
+  const editor = document.getElementById("rich-material-editor");
+
+  if (!editor) return;
+
+  editor.focus();
+
+  try {
+    document.execCommand(
+      "hiliteColor",
+      false,
+      "#fff3a8"
+    );
+  } catch (error) {
+    try {
+      document.execCommand(
+        "backColor",
+        false,
+        "#fff3a8"
+      );
+    } catch (secondError) {
+      console.error(secondError);
+    }
+  }
+}
+
+
+function ouvrirEditeurMateriel(material) {
+  if (!material) {
+    toast("Fichier introuvable.", "error");
+    return;
+  }
+
+  const type = material.type || "notes";
+
+  /*
+   * Les fichiers flashcards et quiz possèdent
+   * leur propre interface.
+   */
+  if (type === "flashcards") {
+    ouvrirFichierFlashcards(material);
+    return;
+  }
+
+  if (type === "quiz") {
+    ouvrirFichierQuiz(material);
+    return;
+  }
+
+  let contenu = material.contenu || "";
+
+  /*
+   * Si le contenu n'est pas encore du HTML,
+   * on le transforme automatiquement.
+   */
+  if (
+    !contientBaliseHTML(contenu)
+  ) {
+    contenu = texteVersHTML(contenu);
+  }
+
+  const typeLabel =
+    TYPES_FICHIERS_ETUDE[type]?.label ||
+    type;
+
+  const titre = escapeHTML(material.titre || "Document");
+
+  openModal(`
+    <div class="rich-editor-modal">
+
+      <div class="rich-editor-header">
+        <div>
+          <div class="rich-editor-kicker">
+            ${ICONES_FICHIERS[type] || "📄"} ${escapeHTML(typeLabel)}
+          </div>
+
+          <input
+            id="rich-material-title"
+            class="rich-editor-title"
+            value="${titre}"
+            maxlength="150"
+          />
+        </div>
+
+        <button
+          type="button"
+          class="icon-button"
+          onclick="closeModal()"
+          aria-label="Fermer"
+        >
+          ✕
+        </button>
+      </div>
+
+
+      <div class="rich-editor-toolbar">
+
+        <button
+          type="button"
+          onclick="executerFormatEditeur('bold')"
+          title="Gras"
+        >
+          <strong>B</strong>
+        </button>
+
+        <button
+          type="button"
+          onclick="executerFormatEditeur('italic')"
+          title="Italique"
+        >
+          <em>I</em>
+        </button>
+
+        <button
+          type="button"
+          onclick="executerFormatEditeur('underline')"
+          title="Souligner"
+        >
+          <u>U</u>
+        </button>
+
+        <button
+          type="button"
+          onclick="insererSurlignage()"
+          title="Surligner"
+        >
+          🖍️
+        </button>
+
+        <span class="editor-divider"></span>
+
+        <button
+          type="button"
+          onclick="executerFormatEditeur('formatBlock', '<h2>')"
+          title="Titre"
+        >
+          H2
+        </button>
+
+        <button
+          type="button"
+          onclick="executerFormatEditeur('formatBlock', '<h3>')"
+          title="Sous-titre"
+        >
+          H3
+        </button>
+
+        <button
+          type="button"
+          onclick="executerFormatEditeur('insertUnorderedList')"
+          title="Liste"
+        >
+          •
+        </button>
+
+        <button
+          type="button"
+          onclick="executerFormatEditeur('insertOrderedList')"
+          title="Liste numérotée"
+        >
+          1.
+        </button>
+
+        <button
+          type="button"
+          onclick="executerFormatEditeur('removeFormat')"
+          title="Supprimer le formatage"
+        >
+          Tx
+        </button>
+
+      </div>
+
+
+      <div
+        id="rich-material-editor"
+        class="rich-material-editor"
+        contenteditable="true"
+        spellcheck="true"
+      >${contenu}</div>
+
+
+      <div class="rich-editor-footer">
+
+        <span class="editor-save-info">
+          Tes modifications seront enregistrées dans ce fichier.
+        </span>
+
+        <div class="editor-footer-actions">
+
+          <button
+            type="button"
+            class="secondary-button"
+            onclick="closeModal()"
+          >
+            Annuler
+          </button>
+
+          <button
+            type="button"
+            class="primary-button"
+            onclick="enregistrerMaterielEdite('${material.id}')"
+          >
+            💾 Enregistrer
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+  `);
+}
+
+
+function contientBaliseHTML(texte) {
+  return /<([a-z][\s\S]*?)>/i.test(texte || "");
+}
+
+
+async function enregistrerMaterielEdite(materialId) {
+  const material = DATA.materials.find(
+    (item) => item.id === materialId
+  );
+
+  if (!material) {
+    toast("Fichier introuvable.", "error");
+    return;
+  }
+
+  const editor =
+    document.getElementById("rich-material-editor");
+
+  const titleInput =
+    document.getElementById("rich-material-title");
+
+  if (!editor || !titleInput) return;
+
+  const nouveauTitre =
+    titleInput.value.trim() || material.titre;
+
+  const nouveauContenu =
+    nettoyerHTML(editor.innerHTML);
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("materiels")
+      .update({
+        titre: nouveauTitre,
+        contenu: nouveauContenu
+      })
+      .eq("id", materialId)
+      .eq("user_id", utilisateurActuel.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const index = DATA.materials.findIndex(
+      (item) => item.id === materialId
+    );
+
+    if (index !== -1) {
+      DATA.materials[index] = data;
+    }
+
+    closeModal();
+    await renderMaterials();
+
+    toast("Fichier enregistré ✨", "success");
+  } catch (error) {
+    console.error(error);
+
+    toast(
+      "Impossible d'enregistrer les modifications.",
+      "error"
+    );
+  }
+}
+
+
+/* =========================================================
+   6. RESUME DETAILLE
+   ========================================================= */
+
+async function genererResumeEtFichier(materialId, mode) {
+  const material = DATA.materials.find(
+    (item) => item.id === materialId
+  );
+
+  if (!material) {
+    toast("Cours introuvable.", "error");
+    return;
+  }
+
+  const chapter = trouverChapitreDuMateriel(material);
+
+  if (!chapter) {
+    toast("Le cours n'est rattaché à aucune leçon.", "error");
+    return;
+  }
+
+  const estExamen = mode === "examen";
+
+  const titre = estExamen
+    ? `Résumé examen — ${material.titre}`
+    : `Résumé détaillé — ${material.titre}`;
+
+  const consigne = estExamen
+    ? `
+Crée un résumé spécialement conçu pour préparer un examen.
+
+Le résumé doit :
+- garder uniquement les notions importantes ;
+- faire ressortir les définitions ;
+- faire ressortir les dates, formules, règles ou mots-clés utiles ;
+- signaler les pièges ou confusions fréquentes ;
+- être structuré avec des titres et des listes ;
+- être facile à relire rapidement avant un contrôle.
+
+Cours :
+${material.contenu}
+`
+    : `
+Crée un résumé détaillé et structuré du cours.
+
+Le résumé doit :
+- expliquer toutes les notions importantes ;
+- conserver les informations utiles ;
+- organiser les idées avec des titres et sous-titres ;
+- utiliser des listes quand cela améliore la compréhension ;
+- rester clair et facile à apprendre.
+
+Cours :
+${material.contenu}
+`;
+
+  try {
+    toast(
+      estExamen
+        ? "Lili prépare ton résumé examen…"
+        : "Lili prépare ton résumé détaillé…",
+      "info"
+    );
+
+    const resultat =
+      await demanderIAEtRecupererTexte(
+        consigne,
+        material
+      );
+
+    if (!resultat) {
+      throw new Error("Réponse IA vide.");
+    }
+
+    const fichier = await creerFichierEtude({
+      chapterId: chapter.id,
+      title: titre,
+      type: estExamen
+        ? "resume_examen"
+        : "resume_detaille",
+      content: texteVersHTML(resultat),
+      sourceMaterialId: material.id
+    });
+
+    return fichier;
+  } catch (error) {
+    console.error(error);
+
+    toast(
+      "Impossible de créer le résumé.",
+      "error"
+    );
+  }
+}
+
+
+/* =========================================================
+   7. IA — APPEL CENTRAL
+   ========================================================= */
+
+async function demanderIAEtRecupererTexte(prompt, material = null) {
+  if (!supabaseClient || !utilisateurActuel) {
+    throw new Error("Utilisateur non connecté.");
+  }
+
+  const { data, error } =
+    await supabaseClient.functions.invoke(
+      "lili",
+      {
+        body: {
+          action: "study_ai",
+          prompt,
+          material,
+          language: langueActuelle
+        }
+      }
+    );
+
+  if (error) {
+    console.error("Erreur Lili :", error);
+    throw error;
+  }
+
+  return (
+    data?.result ||
+    data?.text ||
+    data?.output ||
+    data?.response ||
+    data?.message ||
+    ""
+  );
+}
+
+
+/* =========================================================
+   8. FLASHCARDS ENREGISTREES COMME FICHIER
+   ========================================================= */
+
+function extraireJSONDepuisTexte(texte) {
+  if (!texte) return null;
+
+  let propre = texte
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .trim();
+
+  try {
+    return JSON.parse(propre);
+  } catch (_) {}
+
+  const debutTableau = propre.indexOf("[");
+  const finTableau = propre.lastIndexOf("]");
+
+  if (
+    debutTableau !== -1 &&
+    finTableau !== -1 &&
+    finTableau > debutTableau
+  ) {
+    try {
+      return JSON.parse(
+        propre.slice(
+          debutTableau,
+          finTableau + 1
+        )
+      );
+    } catch (_) {}
+  }
+
+  return null;
+}
+
+
+async function genererFlashcardsEtFichier(materialId) {
+  const material = DATA.materials.find(
+    (item) => item.id === materialId
+  );
+
+  if (!material) {
+    toast("Cours introuvable.", "error");
+    return;
+  }
+
+  const chapter = trouverChapitreDuMateriel(material);
+
+  if (!chapter) {
+    toast("Le cours n'a pas de leçon.", "error");
+    return;
+  }
+
+  const prompt = `
+Crée 10 flashcards à partir du cours ci-dessous.
+
+Retourne UNIQUEMENT un tableau JSON valide.
+
+Format exact :
+[
+  {
+    "question": "Question",
+    "answer": "Réponse"
+  }
+]
+
+Les questions doivent tester les notions importantes du cours.
+
+Cours :
+${material.contenu}
+`;
+
+  try {
+    toast("Lili crée tes flashcards…", "info");
+
+    const texte =
+      await demanderIAEtRecupererTexte(
+        prompt,
+        material
+      );
+
+    const cards = extraireJSONDepuisTexte(texte);
+
+    if (!Array.isArray(cards) || !cards.length) {
+      throw new Error(
+        "Format de flashcards invalide."
+      );
+    }
+
+    const fichier = await creerFichierEtude({
+      chapterId: chapter.id,
+      title: `Flashcards — ${material.titre}`,
+      type: "flashcards",
+      content: cards
+    });
+
+    return fichier;
+  } catch (error) {
+    console.error(error);
+
+    toast(
+      "Impossible de créer les flashcards.",
+      "error"
+    );
+  }
+}
+
+
+/* =========================================================
+   9. QUIZ ENREGISTRE COMME FICHIER
+   ========================================================= */
+
+async function genererQuizEtFichier(materialId) {
+  const material = DATA.materials.find(
+    (item) => item.id === materialId
+  );
+
+  if (!material) {
+    toast("Cours introuvable.", "error");
+    return;
+  }
+
+  const chapter = trouverChapitreDuMateriel(material);
+
+  if (!chapter) {
+    toast("Le cours n'a pas de leçon.", "error");
+    return;
+  }
+
+  const prompt = `
+Crée un quiz de 10 questions basé sur ce cours.
+
+Retourne UNIQUEMENT un tableau JSON valide.
+
+Format exact :
+[
+  {
+    "question": "Question",
+    "choices": [
+      "Réponse A",
+      "Réponse B",
+      "Réponse C",
+      "Réponse D"
+    ],
+    "correct": 0,
+    "explanation": "Courte explication"
+  }
+]
+
+"correct" doit être l'index de la bonne réponse.
+
+Cours :
+${material.contenu}
+`;
+
+  try {
+    toast("Lili crée ton quiz…", "info");
+
+    const texte =
+      await demanderIAEtRecupererTexte(
+        prompt,
+        material
+      );
+
+    const questions =
+      extraireJSONDepuisTexte(texte);
+
+    if (
+      !Array.isArray(questions) ||
+      !questions.length
+    ) {
+      throw new Error(
+        "Format de quiz invalide."
+      );
+    }
+
+    const fichier = await creerFichierEtude({
+      chapterId: chapter.id,
+      title: `Quiz — ${material.titre}`,
+      type: "quiz",
+      content: questions
+    });
+
+    return fichier;
+  } catch (error) {
+    console.error(error);
+
+    toast(
+      "Impossible de créer le quiz.",
+      "error"
+    );
+  }
+}
+
+
+/* =========================================================
+   10. OUVRIR UN FICHIER FLASHCARDS
+   ========================================================= */
+
+function ouvrirFichierFlashcards(material) {
+  let cards;
+
+  try {
+    cards = JSON.parse(material.contenu);
+  } catch (error) {
+    toast(
+      "Ce fichier de flashcards est incorrect.",
+      "error"
+    );
+    return;
+  }
+
+  if (!Array.isArray(cards)) {
+    toast("Aucune flashcard trouvée.", "error");
+    return;
+  }
+
+  let index = 0;
+  let retournee = false;
+
+  function afficher() {
+    const card = cards[index];
+
+    if (!card) {
+      closeModal();
+      toast("Flashcards terminées 🎉", "success");
+      return;
+    }
+
+    openModal(`
+      <div class="study-file-player">
+
+        <div class="study-file-player-top">
+          <span>🧠 Flashcards</span>
+          <span>${index + 1} / ${cards.length}</span>
+        </div>
+
+        <div
+          class="flashcard-player-card ${retournee ? "flipped" : ""}"
+          id="saved-flashcard-card"
+        >
+          <div class="flashcard-side">
+            ${
+              retournee
+                ? escapeHTML(card.answer || "")
+                : escapeHTML(card.question || "")
+            }
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="secondary-button full-width"
+          id="saved-flashcard-flip"
+        >
+          ${
+            retournee
+              ? "Voir la question"
+              : "Voir la réponse"
+          }
+        </button>
+
+        <div class="study-file-navigation">
+          <button
+            type="button"
+            class="secondary-button"
+            id="saved-flashcard-previous"
+            ${index === 0 ? "disabled" : ""}
+          >
+            ← Précédente
+          </button>
+
+          <button
+            type="button"
+            class="primary-button"
+            id="saved-flashcard-next"
+          >
+            ${
+              index === cards.length - 1
+                ? "Terminer"
+                : "Suivante →"
+            }
+          </button>
+        </div>
+
+      </div>
+    `);
+
+    document
+      .getElementById("saved-flashcard-flip")
+      ?.addEventListener("click", () => {
+        retournee = !retournee;
+        afficher();
+      });
+
+    document
+      .getElementById("saved-flashcard-next")
+      ?.addEventListener("click", () => {
+        index++;
+        retournee = false;
+        afficher();
+      });
+
+    document
+      .getElementById("saved-flashcard-previous")
+      ?.addEventListener("click", () => {
+        if (index <= 0) return;
+
+        index--;
+        retournee = false;
+        afficher();
+      });
+  }
+
+  afficher();
+}
+
+
+/* =========================================================
+   11. OUVRIR UN QUIZ ENREGISTRE
+   ========================================================= */
+
+function ouvrirFichierQuiz(material) {
+  let questions;
+
+  try {
+    questions = JSON.parse(material.contenu);
+  } catch (error) {
+    toast(
+      "Ce fichier de quiz est incorrect.",
+      "error"
+    );
+    return;
+  }
+
+  if (!Array.isArray(questions)) {
+    toast("Aucune question trouvée.", "error");
+    return;
+  }
+
+  let index = 0;
+  let score = 0;
+  let termine = false;
+
+  function afficherQuestion() {
+    if (termine) {
+      openModal(`
+        <div class="quiz-result-screen">
+
+          <div class="quiz-result-icon">🎉</div>
+
+          <h2>Quiz terminé !</h2>
+
+          <div class="quiz-score">
+            ${score} / ${questions.length}
+          </div>
+
+          <p>
+            ${
+              score === questions.length
+                ? "Parfait !"
+                : score >= questions.length / 2
+                  ? "Bien joué !"
+                  : "Continue à réviser, tu progresses !"
+            }
+          </p>
+
+          <button
+            type="button"
+            class="primary-button"
+            onclick="closeModal()"
+          >
+            Fermer
+          </button>
+
+        </div>
+      `);
+
+      return;
+    }
+
+    const q = questions[index];
+
+    const choices = Array.isArray(q.choices)
+      ? q.choices
+      : [];
+
+    openModal(`
+      <div class="saved-quiz-player">
+
+        <div class="study-file-player-top">
+          <span>❓ Quiz</span>
+          <span>${index + 1} / ${questions.length}</span>
+        </div>
+
+        <h2>
+          ${escapeHTML(q.question || "")}
+        </h2>
+
+        <div class="saved-quiz-choices">
+          ${choices
+            .map(
+              (choice, choiceIndex) => `
+                <button
+                  type="button"
+                  class="quiz-choice-button"
+                  data-saved-choice="${choiceIndex}"
+                >
+                  ${escapeHTML(choice)}
+                </button>
+              `
+            )
+            .join("")}
+        </div>
+
+      </div>
+    `);
+
+    document
+      .querySelectorAll("[data-saved-choice]")
+      .forEach((button) => {
+        button.addEventListener("click", () => {
+          const selected = Number(
+            button.dataset.savedChoice
+          );
+
+          document
+            .querySelectorAll("[data-saved-choice]")
+            .forEach((item) => {
+              item.disabled = true;
+            });
+
+          if (selected === Number(q.correct)) {
+            button.classList.add("correct");
+            score++;
+            toast("Bonne réponse ! ✨", "success");
+          } else {
+            button.classList.add("wrong");
+
+            const good = document.querySelector(
+              `[data-saved-choice="${Number(q.correct)}"]`
+            );
+
+            good?.classList.add("correct");
+
+            toast(
+              "Pas tout à fait. Regarde l'explication.",
+              "error"
+            );
+          }
+
+          const explanation =
+            q.explanation || "";
+
+          const container =
+            document.querySelector(
+              ".saved-quiz-player"
+            );
+
+          if (container && explanation) {
+            const box =
+              document.createElement("div");
+
+            box.className =
+              "quiz-answer-explanation";
+
+            box.innerHTML = `
+              <strong>💡 Explication</strong>
+              <p>${escapeHTML(explanation)}</p>
+
+              <button
+                type="button"
+                class="primary-button"
+                id="saved-quiz-next"
+              >
+                ${
+                  index === questions.length - 1
+                    ? "Voir le résultat"
+                    : "Question suivante →"
+                }
+              </button>
+            `;
+
+            container.appendChild(box);
+
+            box
+              .querySelector("#saved-quiz-next")
+              ?.addEventListener("click", () => {
+                index++;
+
+                if (index >= questions.length) {
+                  termine = true;
+                }
+
+                afficherQuestion();
+              });
+          }
+        });
+      });
+  }
+
+  afficherQuestion();
+}
+
+
+/* =========================================================
+   12. MULTILINGUE
+   ========================================================= */
+
+const LANGUES_DISPONIBLES = {
+  fr: {
+    name: "Français",
+    flag: "🇫🇷"
+  },
+
+  en: {
+    name: "English",
+    flag: "🇬🇧"
+  },
+
+  zh: {
+    name: "中文",
+    flag: "🇨🇳"
+  },
+
+  vi: {
+    name: "Tiếng Việt",
+    flag: "🇻🇳"
+  }
+};
+
+
+const TRADUCTIONS = {
+
+  fr: {
+    dashboard: "Accueil",
+    subjects: "Matières",
+    lessons: "Leçons",
+    materials: "Cours et fichiers",
+    revisions: "Révisions",
+    calendar: "Calendrier",
+    flashcards: "Flashcards",
+    quiz: "Quiz",
+    studyAI: "Study AI",
+    lili: "Lili",
+    focus: "Focus",
+    statistics: "Statistiques",
+    friends: "Amis",
+    profile: "Profil",
+    settings: "Paramètres",
+
+    detailedSummary: "Résumé détaillé",
+    examSummary: "Résumé examen",
+    createFlashcards: "Créer des flashcards",
+    createQuiz: "Créer un quiz",
+
+    save: "Enregistrer",
+    cancel: "Annuler",
+    delete: "Supprimer",
+    edit: "Modifier",
+    close: "Fermer",
+    search: "Rechercher",
+    back: "Retour",
+
+    language: "Langue",
+    chooseLanguage: "Choisir la langue",
+
+    notes: "Notes",
+    summary: "Résumé",
+    exam: "Examen"
+  },
+
+  en: {
+    dashboard: "Home",
+    subjects: "Subjects",
+    lessons: "Lessons",
+    materials: "Courses & files",
+    revisions: "Reviews",
+    calendar: "Calendar",
+    flashcards: "Flashcards",
+    quiz: "Quiz",
+    studyAI: "Study AI",
+    lili: "Lili",
+    focus: "Focus",
+    statistics: "Statistics",
+    friends: "Friends",
+    profile: "Profile",
+    settings: "Settings",
+
+    detailedSummary: "Detailed summary",
+    examSummary: "Exam summary",
+    createFlashcards: "Create flashcards",
+    createQuiz: "Create a quiz",
+
+    save: "Save",
+    cancel: "Cancel",
+    delete: "Delete",
+    edit: "Edit",
+    close: "Close",
+    search: "Search",
+    back: "Back",
+
+    language: "Language",
+    chooseLanguage: "Choose language",
+
+    notes: "Notes",
+    summary: "Summary",
+    exam: "Exam"
+  },
+
+  zh: {
+    dashboard: "首页",
+    subjects: "科目",
+    lessons: "课程",
+    materials: "课程与文件",
+    revisions: "复习",
+    calendar: "日历",
+    flashcards: "抽认卡",
+    quiz: "测验",
+    studyAI: "Study AI",
+    lili: "Lili",
+    focus: "专注",
+    statistics: "统计",
+    friends: "朋友",
+    profile: "个人资料",
+    settings: "设置",
+
+    detailedSummary: "详细总结",
+    examSummary: "考试总结",
+    createFlashcards: "创建抽认卡",
+    createQuiz: "创建测验",
+
+    save: "保存",
+    cancel: "取消",
+    delete: "删除",
+    edit: "编辑",
+    close: "关闭",
+    search: "搜索",
+    back: "返回",
+
+    language: "语言",
+    chooseLanguage: "选择语言",
+
+    notes: "笔记",
+    summary: "总结",
+    exam: "考试"
+  },
+
+  vi: {
+    dashboard: "Trang chủ",
+    subjects: "Môn học",
+    lessons: "Bài học",
+    materials: "Bài học & tệp",
+    revisions: "Ôn tập",
+    calendar: "Lịch",
+    flashcards: "Flashcards",
+    quiz: "Bài kiểm tra",
+    studyAI: "Study AI",
+    lili: "Lili",
+    focus: "Tập trung",
+    statistics: "Thống kê",
+    friends: "Bạn bè",
+    profile: "Hồ sơ",
+    settings: "Cài đặt",
+
+    detailedSummary: "Tóm tắt chi tiết",
+    examSummary: "Tóm tắt ôn thi",
+    createFlashcards: "Tạo flashcards",
+    createQuiz: "Tạo bài kiểm tra",
+
+    save: "Lưu",
+    cancel: "Hủy",
+    delete: "Xóa",
+    edit: "Chỉnh sửa",
+    close: "Đóng",
+    search: "Tìm kiếm",
+    back: "Quay lại",
+
+    language: "Ngôn ngữ",
+    chooseLanguage: "Chọn ngôn ngữ",
+
+    notes: "Ghi chú",
+    summary: "Tóm tắt",
+    exam: "Kỳ thi"
+  }
+};
+
+
+let langueActuelle =
+  localStorage.getItem("study_planner_language") ||
+  "fr";
+
+
+function traduire(cle) {
+  return (
+    TRADUCTIONS[langueActuelle]?.[cle] ||
+    TRADUCTIONS.fr[cle] ||
+    cle
+  );
+}
+
+
+function appliquerLangue() {
+
+  document.documentElement.lang =
+    langueActuelle === "zh"
+      ? "zh-CN"
+      : langueActuelle;
+
+  document.querySelectorAll("[data-i18n]").forEach(
+    (element) => {
+
+      const cle = element.dataset.i18n;
+
+      if (!cle) return;
+
+      const traduction = traduire(cle);
+
+      /*
+       * Pour les boutons et textes simples.
+       */
+      element.textContent = traduction;
+    }
+  );
+
+
+  document
+    .querySelectorAll("[data-i18n-placeholder]")
+    .forEach((element) => {
+
+      const cle =
+        element.dataset.i18nPlaceholder;
+
+      if (!cle) return;
+
+      element.placeholder =
+        traduire(cle);
+    });
+
+
+  document
+    .querySelectorAll("[data-page-label]")
+    .forEach((element) => {
+
+      const cle =
+        element.dataset.pageLabel;
+
+      if (!cle) return;
+
+      element.textContent =
+        traduire(cle);
+    });
+
+
+  /*
+   * Rafraîchit le texte des fichiers sans perdre
+   * les données enregistrées.
+   */
+  if (typeof renderTopUser === "function") {
+    renderTopUser();
+  }
+}
+
+
+async function changerLangue(langue) {
+
+  if (!LANGUES_DISPONIBLES[langue]) {
+    return;
+  }
+
+  langueActuelle = langue;
+
+  localStorage.setItem(
+    "study_planner_language",
+    langue
+  );
+
+  appliquerLangue();
+
+  /*
+   * Le champ sera ajouté dans profiles lorsque
+   * nous ferons la prochaine mise à jour SQL.
+   *
+   * On tente quand même la sauvegarde maintenant.
+   * Si la colonne n'existe pas encore, le site continue
+   * simplement avec le stockage local.
+   */
+  if (utilisateurActuel) {
+
+    try {
+
+      await supabaseClient
+        .from("profiles")
+        .update({
+          language: langue
+        })
+        .eq("id", utilisateurActuel.id);
+
+    } catch (error) {
+      console.warn(
+        "La préférence de langue sera synchronisée avec Supabase dans la prochaine mise à jour.",
+        error
+      );
+    }
+  }
+
+  toast(
+    `${LANGUES_DISPONIBLES[langue].flag} ${
+      LANGUES_DISPONIBLES[langue].name
+    }`,
+    "success"
+  );
+}
+
+
+/* =========================================================
+   13. PARAMETRES DE LANGUE
+   ========================================================= */
+
+function brancherLangue() {
+
+  const select =
+    document.getElementById("settings-language");
+
+  if (!select) return;
+
+  select.value = langueActuelle;
+
+  select.addEventListener(
+    "change",
+    async () => {
+      await changerLangue(select.value);
+    }
+  );
+
+  appliquerLangue();
+}
+
+
+/* =========================================================
+   14. BOUTONS DES FICHIERS IA
+   ========================================================= */
+
+document.addEventListener("click", async (event) => {
+
+  const button =
+    event.target.closest("[data-study-file-action]");
+
+  if (!button) return;
+
+  const action =
+    button.dataset.studyFileAction;
+
+  const materialId =
+    button.dataset.materialId;
+
+  if (!materialId) {
+    toast("Cours introuvable.", "error");
+    return;
+  }
+
+  if (action === "resume-detaille") {
+    await genererResumeEtFichier(
+      materialId,
+      "detaille"
+    );
+  }
+
+  if (action === "resume-examen") {
+    await genererResumeEtFichier(
+      materialId,
+      "examen"
+    );
+  }
+
+  if (action === "flashcards") {
+    await genererFlashcardsEtFichier(
+      materialId
+    );
+  }
+
+  if (action === "quiz") {
+    await genererQuizEtFichier(
+      materialId
+    );
+}
+
+});
+
+
+/* =========================================================
+   15. CLIQUER SUR UN FICHIER POUR L'OUVRIR
+   ========================================================= */
+
+document.addEventListener("click", (event) => {
+
+  const button =
+    event.target.closest("[data-open-study-file]");
+
+  if (!button) return;
+
+  const materialId =
+    button.dataset.openStudyFile;
+
+  const material =
+    DATA.materials.find(
+      (item) => item.id === materialId
+    );
+
+  if (!material) {
+    toast("Fichier introuvable.", "error");
+    return;
+  }
+
+  if (
+    material.type === "flashcards"
+  ) {
+    ouvrirFichierFlashcards(material);
+    return;
+  }
+
+  if (
+    material.type === "quiz"
+  ) {
+    ouvrirFichierQuiz(material);
+    return;
+  }
+
+  ouvrirEditeurMateriel(material);
+});
+
+
+/* =========================================================
+   16. INITIALISATION DES NOUVELLES FONCTIONS
+   ========================================================= */
+
+function initialiserAmeliorationsStudyPlanner() {
+
+  brancherLangue();
+
+  /*
+   * Rend la langue disponible immédiatement
+   * dans toute l'application.
+   */
+  appliquerLangue();
+
+  console.log(
+    "✅ Fonctions fichiers/éditeur/langues chargées."
+  );
+}
+
+
+if (document.readyState === "loading") {
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    initialiserAmeliorationsStudyPlanner,
+    { once: true }
+  );
+
+} else {
+
+  initialiserAmeliorationsStudyPlanner();
+
+}
+
+
+/* =========================================================
+   17. VARIABLES DISPONIBLES DANS L'INTERFACE
+   ========================================================= */
+
+window.creerFichierEtude =
+  creerFichierEtude;
+
+window.ouvrirEditeurMateriel =
+  ouvrirEditeurMateriel;
+
+window.genererResumeEtFichier =
+  genererResumeEtFichier;
+
+window.genererFlashcardsEtFichier =
+  genererFlashcardsEtFichier;
+
+window.genererQuizEtFichier =
+  genererQuizEtFichier;
+
+window.ouvrirFichierFlashcards =
+  ouvrirFichierFlashcards;
+
+window.ouvrirFichierQuiz =
+  ouvrirFichierQuiz;
+
+window.changerLangue =
+  changerLangue;
+
+window.appliquerLangue =
+  appliquerLangue;
