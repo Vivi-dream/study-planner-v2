@@ -8486,3 +8486,7817 @@ function renderDate() {
   }
 
 }
+/* =========================================================
+   PART 6 — FLASHCARDS + QUIZZES
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   FLASHCARDS
+   --------------------------------------------------------- */
+
+function renderFlashcards() {
+
+  const decksContainer =
+    $("#flashcard-decks");
+
+
+  if (!decksContainer) {
+    return;
+  }
+
+
+  /*
+    One deck per course.
+  */
+
+  const materials =
+    [
+      ...DATA.materials
+    ].sort(
+      (a, b) =>
+        String(
+          b.created_at
+        ).localeCompare(
+          String(
+            a.created_at
+          )
+        )
+    );
+
+
+  if (!materials.length) {
+
+    decksContainer.innerHTML = `
+      <div class="empty-state">
+
+        <div
+          style="
+            font-size:45px;
+          "
+        >
+          🃏
+        </div>
+
+        <strong>
+          Aucun paquet de cartes
+        </strong>
+
+        <span>
+          Ajoute d'abord un cours,
+          puis Lili pourra créer
+          tes flashcards.
+        </span>
+
+      </div>
+    `;
+
+    const area =
+      $("#flashcard-area");
+
+    if (area) {
+      area.innerHTML = "";
+    }
+
+    return;
+  }
+
+
+  decksContainer.innerHTML =
+    materials
+      .map(
+        material => {
+
+          const cards =
+            DATA.flashcards.filter(
+              card =>
+                card.material_id ===
+                material.id
+            );
+
+
+          const dueCards =
+            cards.filter(
+              card =>
+                !card.due_date ||
+                card.due_date <=
+                  today()
+            );
+
+
+          return `
+
+            <div
+              class="deck-card"
+            >
+
+              <div>
+
+                <span>
+                  ${materialIcon(
+                    material.kind
+                  )}
+                </span>
+
+
+                <div>
+
+                  <strong>
+                    ${escapeHTML(
+                      material.title
+                    )}
+                  </strong>
+
+
+                  <small>
+
+                    ${
+                      cards.length
+                    }
+                    carte${
+                      cards.length !==
+                      1
+                        ? "s"
+                        : ""
+                    }
+
+
+                    ${
+                      dueCards.length
+                        ? `
+                          ·
+                          ${dueCards.length}
+                          à revoir
+                        `
+                        : ""
+                    }
+
+                  </small>
+
+                </div>
+
+              </div>
+
+
+              <div>
+
+                ${
+                  cards.length
+
+                    ? `
+                      <button
+                        class="small-button"
+                        onclick="
+                          startMaterialFlashcards(
+                            '${material.id}'
+                          )
+                        "
+                      >
+                        Réviser
+                      </button>
+                    `
+
+                    : `
+                      <button
+                        class="small-button"
+                        onclick="
+                          createAICards(
+                            '${material.id}'
+                          )
+                        "
+                      >
+                        ✨ Créer
+                      </button>
+                    `
+                }
+
+
+                <button
+                  class="small-button"
+                  onclick="
+                    createAICards(
+                      '${material.id}'
+                    )
+                  "
+                >
+                  + AI
+                </button>
+
+              </div>
+
+            </div>
+
+          `;
+
+        }
+      )
+      .join("");
+
+
+  renderCurrentFlashcard();
+
+}
+
+
+/* ---------------------------------------------------------
+   START FLASHCARD DECK
+   --------------------------------------------------------- */
+
+window.startMaterialFlashcards =
+function (
+  materialId
+) {
+
+  const cards =
+    DATA.flashcards.filter(
+      card =>
+        card.material_id ===
+        materialId
+    );
+
+
+  if (!cards.length) {
+
+    toast(
+      "Ce cours n'a pas encore de flashcards. Demande à Lili d'en créer.",
+      "warning"
+    );
+
+    activeMaterialId =
+      materialId;
+
+
+    navigate(
+      "study-ai"
+    );
+
+
+    setTimeout(
+      () => {
+
+        const selector =
+          $(
+            "#study-ai-material"
+          );
+
+
+        if (selector) {
+
+          selector.value =
+            materialId;
+
+        }
+
+      },
+      0
+    );
+
+
+    return;
+
+  }
+
+
+  /*
+    Prefer due cards first.
+  */
+
+  const due =
+    cards.filter(
+      card =>
+        !card.due_date ||
+        card.due_date <=
+          today()
+    );
+
+
+  flashDeck =
+    due.length
+      ? due
+      : cards;
+
+
+  flashIndex =
+    0;
+
+  flashFlipped =
+    false;
+
+
+  activeMaterialId =
+    materialId;
+
+
+  navigate(
+    "flashcards"
+  );
+
+
+  renderCurrentFlashcard();
+
+};
+
+
+/* ---------------------------------------------------------
+   CURRENT FLASHCARD
+   --------------------------------------------------------- */
+
+function renderCurrentFlashcard() {
+
+  const area =
+    $("#flashcard-area");
+
+
+  if (!area) {
+    return;
+  }
+
+
+  if (!flashDeck.length) {
+
+    area.innerHTML =
+      `
+        <div class="empty-state">
+          Aucune carte disponible.
+        </div>
+      `;
+
+    return;
+
+  }
+
+
+  /*
+    Safety in case the deck
+    changed while we were studying.
+  */
+
+  if (
+    flashIndex >=
+    flashDeck.length
+  ) {
+
+    flashIndex =
+      0;
+
+  }
+
+
+  const card =
+    flashDeck[
+      flashIndex
+    ];
+
+
+  area.innerHTML = `
+
+    <div
+      class="flashcard-player"
+    >
+
+      <div
+        class="
+          flashcard
+          ${
+            flashFlipped
+              ? "flipped"
+              : ""
+          }
+        "
+        onclick="
+          flipFlashcard()
+        "
+      >
+
+        <div
+          class="flash-front"
+        >
+
+          <small>
+
+            CARTE
+
+            ${
+              flashIndex + 1
+            }
+
+            /
+
+            ${
+              flashDeck.length
+            }
+
+          </small>
+
+
+          <h2>
+            ${escapeHTML(
+              card.front
+            )}
+          </h2>
+
+
+          <span>
+            Clique pour retourner
+          </span>
+
+        </div>
+
+
+        <div
+          class="flash-back"
+        >
+
+          <small>
+            RÉPONSE
+          </small>
+
+
+          <h2>
+            ${escapeHTML(
+              card.back
+            )}
+          </h2>
+
+
+          <span>
+            Boîte
+            ${
+              card.box || 1
+            }
+            / 5
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div
+        class="flash-controls"
+      >
+
+        <button
+          class="btn soft"
+          onclick="
+            flashResult(
+              'hard'
+            )
+          "
+        >
+          À revoir
+        </button>
+
+
+        <button
+          class="btn primary"
+          onclick="
+            flipFlashcard()
+          "
+        >
+          ${
+            flashFlipped
+              ? "Retourner"
+              : "Voir la réponse"
+          }
+        </button>
+
+
+        <button
+          class="btn soft"
+          onclick="
+            flashResult(
+              'easy'
+            )
+          "
+        >
+          Je sais ✨
+        </button>
+
+      </div>
+
+
+      <div
+        class="flash-progress"
+      >
+
+        <div
+          style="
+            width:
+            ${
+              (
+                (
+                  flashIndex + 1
+                ) /
+                flashDeck.length
+              ) *
+              100
+            }%;
+          "
+        ></div>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* ---------------------------------------------------------
+   FLIP
+   --------------------------------------------------------- */
+
+window.flipFlashcard =
+function () {
+
+  flashFlipped =
+    !flashFlipped;
+
+  renderCurrentFlashcard();
+
+};
+
+
+/* ---------------------------------------------------------
+   FLASHCARD RESULT
+   --------------------------------------------------------- */
+
+window.flashResult =
+async function (
+  result
+) {
+
+  const card =
+    flashDeck[
+      flashIndex
+    ];
+
+
+  if (!card) {
+    return;
+  }
+
+
+  try {
+
+    let newBox =
+      Number(
+        card.box || 1
+      );
+
+
+    /*
+      Easy:
+      move one box forward.
+
+      Hard:
+      return to box 1.
+    */
+
+    if (
+      result ===
+      "easy"
+    ) {
+
+      newBox =
+        Math.min(
+          5,
+          newBox + 1
+        );
+
+    } else {
+
+      newBox =
+        1;
+
+    }
+
+
+    /*
+      Simple adaptive spacing.
+    */
+
+    const spacing =
+      {
+        1: 1,
+        2: 2,
+        3: 4,
+        4: 7,
+        5: 14
+      }[
+        newBox
+      ] || 1;
+
+
+    const nextDate =
+      new Date();
+
+
+    nextDate.setDate(
+      nextDate.getDate() +
+      spacing
+    );
+
+
+    const formatted =
+      nextDate
+        .toISOString()
+        .slice(
+          0,
+          10
+        );
+
+
+    await updateRow(
+      "flashcards",
+      card.id,
+      {
+
+        box:
+          newBox,
+
+        due_date:
+          formatted
+
+      }
+    );
+
+
+    /*
+      Move to next card.
+    */
+
+    flashIndex =
+      (
+        flashIndex + 1
+      ) %
+      flashDeck.length;
+
+
+    flashFlipped =
+      false;
+
+
+    await refreshData();
+
+
+    renderCurrentFlashcard();
+
+
+    toast(
+      result === "easy"
+
+        ? "Carte maîtrisée ✨"
+
+        : "Carte remise à revoir 🌷"
+    );
+
+
+  } catch (error) {
+
+    handleAuthError(
+      error
+    );
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   MANUAL FLASHCARD
+   --------------------------------------------------------- */
+
+window.openAddFlashcards =
+function () {
+
+  if (
+    !DATA.materials.length
+  ) {
+
+    toast(
+      "Ajoute d'abord un cours.",
+      "warning"
+    );
+
+    navigate(
+      "materials"
+    );
+
+    return;
+
+  }
+
+
+  openModal(`
+
+    <span class="eyebrow">
+      FLASHCARDS
+    </span>
+
+
+    <h2>
+      Nouvelle flashcard 🃏
+    </h2>
+
+
+    <form
+      id="manual-card-form"
+      class="form-stack"
+    >
+
+      <label>
+
+        Cours
+
+        <select
+          id="manual-card-material"
+        >
+
+          ${
+            DATA.materials
+              .map(
+                material => `
+                  <option
+                    value="${material.id}"
+                  >
+                    ${escapeHTML(
+                      material.title
+                    )}
+                  </option>
+                `
+              )
+              .join("")
+          }
+
+        </select>
+
+      </label>
+
+
+      <label>
+
+        Question
+
+        <input
+          id="manual-card-front"
+          placeholder="Ex. Quelle est la formule du discriminant ?"
+          required
+        >
+
+      </label>
+
+
+      <label>
+
+        Réponse
+
+        <textarea
+          id="manual-card-back"
+          rows="6"
+          placeholder="Écris la réponse..."
+          required
+        ></textarea>
+
+      </label>
+
+
+      <button
+        class="btn primary"
+        type="submit"
+      >
+        Ajouter la flashcard 🃏
+      </button>
+
+    </form>
+
+  `);
+
+
+  $(
+    "#manual-card-form"
+  ).onsubmit =
+    async event => {
+
+      event.preventDefault();
+
+
+      try {
+
+        await insertRow(
+          "flashcards",
+          {
+
+            user_id:
+              session.user.id,
+
+            material_id:
+              $(
+                "#manual-card-material"
+              ).value,
+
+            front:
+              $(
+                "#manual-card-front"
+              )
+                .value
+                .trim(),
+
+            back:
+              $(
+                "#manual-card-back"
+              )
+                .value
+                .trim(),
+
+            box:
+              1,
+
+            due_date:
+              today()
+
+          }
+        );
+
+
+        closeModal();
+
+        await refreshData();
+
+
+        toast(
+          "Flashcard ajoutée 🃏"
+        );
+
+
+      } catch (error) {
+
+        handleAuthError(
+          error
+        );
+
+      }
+
+    };
+
+};
+
+
+/* ---------------------------------------------------------
+   QUIZ SETUP
+   --------------------------------------------------------- */
+
+function renderQuizOptions() {
+
+  const selector =
+    $("#quiz-subject");
+
+
+  if (!selector) {
+    return;
+  }
+
+
+  const previous =
+    selector.value ||
+    "all";
+
+
+  selector.innerHTML = `
+
+    <option
+      value="all"
+    >
+      Toutes les matières
+    </option>
+
+
+    ${
+      DATA.subjects
+        .map(
+          subject => `
+            <option
+              value="${subject.id}"
+            >
+              ${subject.icon}
+              ${escapeHTML(
+                subject.name
+              )}
+            </option>
+          `
+        )
+        .join("")
+    }
+
+  `;
+
+
+  if (
+    DATA.subjects.some(
+      subject =>
+        subject.id ===
+        previous
+    )
+  ) {
+
+    selector.value =
+      previous;
+
+  } else {
+
+    selector.value =
+      "all";
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   START QUIZ
+   --------------------------------------------------------- */
+
+window.startQuiz =
+function (
+  materialId = null
+) {
+
+  let materials =
+    [
+      ...DATA.materials
+    ];
+
+
+  /*
+    Specific course.
+  */
+
+  if (
+    materialId
+  ) {
+
+    materials =
+      materials.filter(
+        material =>
+          material.id ===
+          materialId
+      );
+
+  }
+
+
+  /*
+    Subject selection.
+  */
+
+  else {
+
+    const subjectId =
+      $(
+        "#quiz-subject"
+      )?.value ||
+      "all";
+
+
+    if (
+      subjectId !==
+      "all"
+    ) {
+
+      materials =
+        materials.filter(
+          material =>
+            material.subject_id ===
+            subjectId
+        );
+
+    }
+
+  }
+
+
+  const length =
+    Number(
+      $(
+        "#quiz-length"
+      )?.value ||
+      10
+    );
+
+
+  const difficulty =
+    $(
+      "#quiz-difficulty"
+    )?.value ||
+    "medium";
+
+
+  /*
+    Generate question pool.
+  */
+
+  const questions =
+    createQuizQuestions(
+      materials,
+      difficulty
+    );
+
+
+  if (
+    questions.length ===
+    0
+  ) {
+
+    toast(
+      "Il faut d'abord créer quelques flashcards. Tu peux demander à Lili de les générer.",
+      "warning"
+    );
+
+
+    if (
+      materialId
+    ) {
+
+      activeMaterialId =
+        materialId;
+
+      navigate(
+        "study-ai"
+      );
+
+    }
+
+
+    return;
+
+  }
+
+
+  quizState = {
+
+    questions:
+      shuffle(
+        questions
+      ).slice(
+        0,
+        Math.min(
+          length,
+          questions.length
+        )
+      ),
+
+    index:
+      0,
+
+    score:
+      0,
+
+    difficulty:
+      difficulty
+
+  };
+
+
+  navigate(
+    "quiz"
+  );
+
+
+  renderQuizQuestion();
+
+};
+
+
+/* ---------------------------------------------------------
+   QUIZ FROM SPECIFIC MATERIAL
+   --------------------------------------------------------- */
+
+window.startMaterialQuiz =
+function (
+  materialId
+) {
+
+  startQuiz(
+    materialId
+  );
+
+};
+
+
+/* ---------------------------------------------------------
+   CREATE QUESTIONS
+   --------------------------------------------------------- */
+
+function createQuizQuestions(
+  materials,
+  difficulty
+) {
+
+  const cards =
+    materials.flatMap(
+      material =>
+        DATA.flashcards.filter(
+          card =>
+            card.material_id ===
+            material.id
+        )
+    );
+
+
+  if (
+    !cards.length
+  ) {
+
+    return [];
+
+  }
+
+
+  const allAnswers =
+    [
+      ...new Set(
+        cards
+          .map(
+            card =>
+              card.back
+          )
+          .filter(Boolean)
+      )
+    ];
+
+
+  const questions =
+    [];
+
+
+  cards.forEach(
+    card => {
+
+      const possibleDistractors =
+        shuffle(
+          allAnswers.filter(
+            answer =>
+              answer !==
+              card.back
+          )
+        );
+
+
+      /*
+        Difficulty controls
+        distractor quantity
+        and question complexity.
+      */
+
+      let distractorCount =
+        3;
+
+
+      if (
+        difficulty ===
+        "easy"
+      ) {
+
+        distractorCount =
+          2;
+
+      }
+
+
+      if (
+        difficulty ===
+        "hard"
+      ) {
+
+        distractorCount =
+          3;
+
+      }
+
+
+      const choices =
+        shuffle([
+          card.back,
+          ...possibleDistractors
+            .slice(
+              0,
+              distractorCount
+            )
+        ]);
+
+
+      if (
+        choices.length <
+        2
+      ) {
+
+        return;
+
+      }
+
+
+      let questionText =
+        card.front;
+
+
+      if (
+        difficulty ===
+        "hard"
+      ) {
+
+        questionText =
+          `Défi : ${card.front}`;
+
+      }
+
+
+      questions.push({
+
+        question:
+          questionText,
+
+        answer:
+          card.back,
+
+        choices:
+          choices,
+
+        materialId:
+          card.material_id
+
+      });
+
+    }
+  );
+
+
+  return questions;
+
+}
+
+
+/* ---------------------------------------------------------
+   RENDER QUIZ QUESTION
+   --------------------------------------------------------- */
+
+function renderQuizQuestion() {
+
+  const selection =
+    $("#quiz-selection");
+
+
+  const area =
+    $("#quiz-area");
+
+
+  if (
+    !selection ||
+    !area
+  ) {
+
+    return;
+
+  }
+
+
+  /*
+    Finished?
+  */
+
+  if (
+    quizState.index >=
+    quizState.questions.length
+  ) {
+
+    finishQuiz();
+
+    return;
+
+  }
+
+
+  selection.classList.add(
+    "hidden"
+  );
+
+
+  area.classList.remove(
+    "hidden"
+  );
+
+
+  const question =
+    quizState.questions[
+      quizState.index
+    ];
+
+
+  const percentage =
+    (
+      quizState.index /
+      quizState.questions.length
+    ) *
+    100;
+
+
+  area.innerHTML = `
+
+    <div
+      class="quiz-question-card"
+    >
+
+      <div
+        class="quiz-progress"
+      >
+
+        <span>
+
+          Question
+          ${
+            quizState.index + 1
+          }
+          /
+          ${
+            quizState.questions.length
+          }
+
+        </span>
+
+
+        <div>
+
+          <div
+            style="
+              width:${percentage}%;
+            "
+          ></div>
+
+        </div>
+
+      </div>
+
+
+      <div
+        class="eyebrow"
+        style="
+          margin-top:20px;
+        "
+      >
+        ${
+          quizState.difficulty ===
+          "hard"
+
+            ? "CHALLENGE"
+
+            : quizState.difficulty ===
+              "easy"
+
+            ? "ÉCHAUFFEMENT"
+
+            : "QUIZ"
+        }
+      </div>
+
+
+      <h2>
+        ${escapeHTML(
+          question.question
+        )}
+      </h2>
+
+
+      <div
+        class="quiz-choices"
+      >
+
+        ${
+          question.choices
+            .map(
+              (
+                choice,
+                index
+              ) => `
+
+                <button
+                  type="button"
+                  data-choice="${escapeHTML(
+                    choice
+                  )}"
+                  onclick="
+                    answerQuiz(
+                      this
+                    )
+                  "
+                >
+
+                  ${
+                    String.fromCharCode(
+                      65 + index
+                    )
+                  }.
+
+                  ${escapeHTML(
+                    choice
+                  )}
+
+                </button>
+
+              `
+            )
+            .join("")
+        }
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* ---------------------------------------------------------
+   ANSWER QUIZ
+   --------------------------------------------------------- */
+
+window.answerQuiz =
+function (
+  button
+) {
+
+  const choicesContainer =
+    button.parentElement;
+
+
+  if (
+    choicesContainer.dataset
+      .answered ===
+    "true"
+  ) {
+
+    return;
+
+  }
+
+
+  choicesContainer.dataset
+    .answered =
+    "true";
+
+
+  const question =
+    quizState.questions[
+      quizState.index
+    ];
+
+
+  const selected =
+    button.dataset.choice;
+
+
+  const correct =
+    selected ===
+    question.answer;
+
+
+  if (
+    correct
+  ) {
+
+    button.classList.add(
+      "correct"
+    );
+
+
+    quizState.score++;
+
+
+    toast(
+      "+10 XP · Bonne réponse ⭐"
+    );
+
+  } else {
+
+    button.classList.add(
+      "wrong"
+    );
+
+
+    const correctButton =
+      [
+        ...choicesContainer
+          .querySelectorAll(
+            "button"
+          )
+      ].find(
+        item =>
+          item.dataset.choice ===
+          question.answer
+      );
+
+
+    if (
+      correctButton
+    ) {
+
+      correctButton.classList.add(
+        "correct"
+      );
+
+    }
+
+
+    toast(
+      "Pas grave, regarde la bonne réponse 🌷",
+      "warning"
+    );
+
+  }
+
+
+  setTimeout(
+    () => {
+
+      quizState.index++;
+
+      renderQuizQuestion();
+
+    },
+    850
+  );
+
+};
+
+
+/* ---------------------------------------------------------
+   FINISH QUIZ
+   --------------------------------------------------------- */
+
+async function finishQuiz() {
+
+  const total =
+    quizState.questions.length;
+
+
+  if (
+    total ===
+    0
+  ) {
+
+    return;
+
+  }
+
+
+  const percentage =
+    Math.round(
+      (
+        quizState.score /
+        total
+      ) *
+      100
+    );
+
+
+  const earnedXP =
+    15 +
+    quizState.score *
+    10;
+
+
+  try {
+
+    /*
+      Save attempt in Supabase.
+    */
+
+    await insertRow(
+      "quiz_attempts",
+      {
+
+        user_id:
+          session.user.id,
+
+        score:
+          quizState.score,
+
+        total:
+          total,
+
+        percentage:
+          percentage,
+
+        earned_xp:
+          earnedXP,
+
+        difficulty:
+          quizState.difficulty
+
+      }
+    );
+
+
+    /*
+      Every 5 completed quizzes
+      unlocks a reward.
+
+      We check the count after
+      saving the latest attempt.
+    */
+
+    const quizCount =
+      DATA.quizAttempts.length +
+      1;
+
+
+    if (
+      quizCount % 5 ===
+      0
+    ) {
+
+      await unlockNextReward();
+
+    }
+
+
+    await refreshData();
+
+
+  } catch (error) {
+
+    console.error(
+      "Quiz save error:",
+      error
+    );
+
+  }
+
+
+  const area =
+    $("#quiz-area");
+
+
+  if (!area) {
+    return;
+  }
+
+
+  const emoji =
+    percentage >= 80
+      ? "🎉"
+      : percentage >= 50
+      ? "🌷"
+      : "💪";
+
+
+  area.innerHTML = `
+
+    <div
+      class="quiz-result"
+    >
+
+      <div
+        style="
+          font-size:58px;
+        "
+      >
+        ${emoji}
+      </div>
+
+
+      <h2>
+        Quiz terminé !
+      </h2>
+
+
+      <strong>
+        ${
+          quizState.score
+        }
+        /
+        ${
+          total
+        }
+      </strong>
+
+
+      <p>
+        ${
+          percentage
+        }%
+        ·
+        +${
+          earnedXP
+        }
+        XP
+      </p>
+
+
+      <p>
+
+        ${
+          percentage >= 80
+
+            ? "Excellent travail ! ✨"
+
+            : percentage >= 50
+
+            ? "Tu progresses bien. Continue ! 🌸"
+
+            : "Tu sais maintenant quelles notions renforcer. 💪"
+
+        }
+
+      </p>
+
+
+      <div
+        class="button-row"
+        style="
+          justify-content:center;
+        "
+      >
+
+        <button
+          class="btn primary"
+          onclick="
+            resetQuiz()
+          "
+        >
+          Nouveau quiz
+        </button>
+
+
+        ${
+          activeMaterialId
+
+            ? `
+              <button
+                class="btn soft"
+                onclick="
+                  startMaterialFlashcards(
+                    '${activeMaterialId}'
+                  )
+                "
+              >
+                Revoir les flashcards
+              </button>
+            `
+
+            : ""
+        }
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* ---------------------------------------------------------
+   RESET QUIZ
+   --------------------------------------------------------- */
+
+window.resetQuiz =
+function () {
+
+  quizState = {
+
+    questions:
+      [],
+
+    index:
+      0,
+
+    score:
+      0,
+
+    difficulty:
+      "medium"
+
+  };
+
+
+  $("#quiz-area")
+    ?.classList.add(
+      "hidden"
+    );
+
+
+  $("#quiz-selection")
+    ?.classList.remove(
+      "hidden"
+    );
+
+
+  renderQuizOptions();
+
+};
+
+
+/* ---------------------------------------------------------
+   UNLOCK REWARD
+   --------------------------------------------------------- */
+
+async function unlockNextReward() {
+
+  const rewards = [
+
+    "🌸 Petit jardin",
+
+    "✨ Étoile brillante",
+
+    "🦋 Papillon",
+
+    "🌙 Lune douce",
+
+    "💗 Cœur rose",
+
+    "🪐 Petite planète",
+
+    "🌷 Tulipe",
+
+    "☁️ Nuage",
+
+    "🌈 Arc-en-ciel",
+
+    "🧸 Petit compagnon"
+
+  ];
+
+
+  const existingNames =
+    new Set(
+      DATA.rewards.map(
+        reward =>
+          reward.name
+      )
+    );
+
+
+  const nextReward =
+    rewards.find(
+      reward =>
+        !existingNames.has(
+          reward
+        )
+    ) ||
+    rewards[
+      DATA.rewards.length %
+      rewards.length
+    ];
+
+
+  try {
+
+    await insertRow(
+      "rewards",
+      {
+
+        user_id:
+          session.user.id,
+
+        name:
+          nextReward
+
+      }
+    );
+
+
+    toast(
+      `Nouvelle récompense : ${nextReward} 🎁`
+    );
+
+
+  } catch (error) {
+
+    /*
+      Don't interrupt the quiz
+      if reward insertion fails.
+    */
+
+    console.warn(
+      "Reward insertion failed:",
+      error
+    );
+
+  }
+
+}
+/* =========================================================
+   PART 7 — LILI AI + STUDY AI
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   AI FUNCTION HELPER
+   --------------------------------------------------------- */
+
+async function callLiliAI({
+  action = "chat",
+  prompt = "",
+  materialId = null,
+  context = null
+} = {}) {
+
+  if (!session?.user) {
+
+    toast(
+      "Connecte-toi pour utiliser Lili.",
+      "warning"
+    );
+
+    return null;
+
+  }
+
+
+  /*
+    Get the selected lesson.
+  */
+
+  const material =
+    materialId
+      ? getMaterial(
+          materialId
+        )
+      : null;
+
+
+  /*
+    Prepare only the study content
+    needed by the AI.
+
+    We do NOT send passwords,
+    private authentication data,
+    etc.
+  */
+
+  const materialContext =
+    material
+
+      ? {
+
+          id:
+            material.id,
+
+          title:
+            material.title,
+
+          kind:
+            material.kind,
+
+          content:
+            material.notes ||
+            material.raw_text ||
+            ""
+
+        }
+
+      : null;
+
+
+  try {
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .functions
+        .invoke(
+          "lili",
+          {
+
+            body: {
+
+              action:
+                action,
+
+              prompt:
+                prompt,
+
+              material:
+                materialContext,
+
+              context:
+                context
+
+            }
+
+          }
+        );
+
+
+    if (error) {
+
+      throw error;
+
+    }
+
+
+    return (
+      data?.result ||
+      data?.text ||
+      ""
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "Lili AI error:",
+      error
+    );
+
+
+    toast(
+      "Lili ne peut pas répondre pour le moment. Vérifie que la fonction AI est bien configurée.",
+      "error"
+    );
+
+
+    return null;
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   LILI CHAT
+   --------------------------------------------------------- */
+
+function renderLili() {
+
+  const messages =
+    $("#lili-messages");
+
+
+  if (!messages) {
+
+    return;
+
+  }
+
+
+  /*
+    Don't reset the conversation
+    every time the page renders.
+  */
+
+  if (
+    messages.dataset.initialized ===
+    "true"
+  ) {
+
+    return;
+
+  }
+
+
+  messages.dataset.initialized =
+    "true";
+
+
+  messages.innerHTML = `
+
+    <div
+      class="lili-message assistant"
+    >
+
+      <div
+        class="message-avatar"
+      >
+        🌸
+      </div>
+
+
+      <div
+        class="message-bubble"
+      >
+
+        Coucou
+        ${
+          escapeHTML(
+            profile?.display_name ||
+            profile?.first_name ||
+            ""
+          )
+        }
+        ! 💕
+
+        <br><br>
+
+        Je suis Lili.
+
+        Je peux t'aider à :
+
+        <br>
+        📝 comprendre un cours
+        <br>
+        🃏 créer des flashcards
+        <br>
+        ❓ préparer un quiz
+        <br>
+        🧠 faire une carte mentale
+        <br>
+        🎙️ préparer un podcast
+        <br>
+        📚 préparer un test
+
+        <br><br>
+
+        Tu peux simplement me poser
+        une question. ✨
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* ---------------------------------------------------------
+   SEND MESSAGE TO LILI
+   --------------------------------------------------------- */
+
+async function sendLiliMessage(
+  message
+) {
+
+  const cleanMessage =
+    String(
+      message || ""
+    ).trim();
+
+
+  if (
+    !cleanMessage
+  ) {
+
+    return;
+
+  }
+
+
+  const container =
+    $("#lili-messages");
+
+
+  if (!container) {
+
+    return;
+
+  }
+
+
+  /*
+    User message.
+  */
+
+  container.innerHTML += `
+
+    <div
+      class="lili-message user"
+    >
+
+      <div
+        class="message-bubble"
+      >
+
+        ${escapeHTML(
+          cleanMessage
+        )}
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  /*
+    Temporary typing indicator.
+  */
+
+  const typing =
+    document.createElement(
+      "div"
+    );
+
+
+  typing.className =
+    "lili-message assistant";
+
+
+  typing.innerHTML = `
+
+    <div
+      class="message-avatar"
+    >
+      🌸
+    </div>
+
+
+    <div
+      class="message-bubble"
+    >
+      Je réfléchis… ✨
+    </div>
+
+  `;
+
+
+  container.appendChild(
+    typing
+  );
+
+
+  container.scrollTop =
+    container.scrollHeight;
+
+
+  /*
+    Useful study context.
+  */
+
+  const due =
+    DATA.revisions
+      .filter(
+        revision =>
+          !revision.completed &&
+          revision.scheduled_date <=
+            today()
+      )
+      .slice(
+        0,
+        12
+      )
+      .map(
+        revision =>
+          getMaterial(
+            revision.material_id
+          )?.title
+      )
+      .filter(Boolean);
+
+
+  const materialList =
+    DATA.materials
+      .slice(
+        0,
+        30
+      )
+      .map(
+        material => ({
+
+          title:
+            material.title,
+
+          subject:
+            getSubject(
+              material.subject_id
+            )?.name ||
+            "",
+
+          chapter:
+            getChapter(
+              material.chapter_id
+            )?.name ||
+            ""
+
+        })
+      );
+
+
+  try {
+
+    const result =
+      await callLiliAI({
+
+        action:
+          "chat",
+
+        prompt:
+          cleanMessage,
+
+        context: {
+
+          studentName:
+            profile?.display_name ||
+            profile?.first_name ||
+            "élève",
+
+          classLevel:
+            profile?.class_level ||
+            "",
+
+          dueRevisions:
+            due,
+
+          materials:
+            materialList
+
+        }
+
+      });
+
+
+    typing
+      .querySelector(
+        ".message-bubble"
+      )
+      .textContent =
+      result ||
+      "Je n'ai pas réussi à trouver une réponse pour le moment.";
+
+
+  } catch (error) {
+
+    typing
+      .querySelector(
+        ".message-bubble"
+      )
+      .textContent =
+      "Je n'arrive pas à joindre mon service AI pour le moment. 🌷";
+
+  }
+
+
+  container.scrollTop =
+    container.scrollHeight;
+
+}
+
+
+/* ---------------------------------------------------------
+   STUDY AI PAGE
+   --------------------------------------------------------- */
+
+function renderStudyAI() {
+
+  const selector =
+    $("#study-ai-material");
+
+
+  if (!selector) {
+
+    return;
+
+  }
+
+
+  const previous =
+    selector.value ||
+    activeMaterialId ||
+    "";
+
+
+  selector.innerHTML = `
+
+    <option
+      value=""
+    >
+      Choisir un cours
+    </option>
+
+
+    ${
+      DATA.materials
+        .map(
+          material => `
+
+            <option
+              value="${material.id}"
+            >
+
+              ${materialIcon(
+                material.kind
+              )}
+
+              ${escapeHTML(
+                material.title
+              )}
+
+            </option>
+
+          `
+        )
+        .join("")
+    }
+
+  `;
+
+
+  if (
+    DATA.materials.some(
+      material =>
+        material.id ===
+        previous
+    )
+  ) {
+
+    selector.value =
+      previous;
+
+  }
+
+
+}
+
+
+/* ---------------------------------------------------------
+   OPEN STUDY AI FOR MATERIAL
+   --------------------------------------------------------- */
+
+window.openStudyAIForMaterial =
+function (
+  materialId
+) {
+
+  activeMaterialId =
+    materialId;
+
+
+  navigate(
+    "study-ai"
+  );
+
+
+  setTimeout(
+    () => {
+
+      const selector =
+        $("#study-ai-material");
+
+
+      if (selector) {
+
+        selector.value =
+          materialId;
+
+      }
+
+
+      const output =
+        $("#study-ai-output");
+
+
+      if (output) {
+
+        output.innerHTML = `
+
+          <div
+            class="empty-state"
+          >
+
+            Choisis une action
+            pour demander à Lili
+            de travailler sur ce cours. 🌸
+
+          </div>
+
+        `;
+
+      }
+
+    },
+    0
+  );
+
+};
+
+
+/* ---------------------------------------------------------
+   RUN STUDY AI ACTION
+   --------------------------------------------------------- */
+
+async function runStudyAIAction(
+  action
+) {
+
+  const materialId =
+    $("#study-ai-material")
+      ?.value;
+
+
+  if (!materialId) {
+
+    toast(
+      "Choisis d'abord un cours.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+
+  activeMaterialId =
+    materialId;
+
+
+  const output =
+    $("#study-ai-output");
+
+
+  if (!output) {
+
+    return;
+
+  }
+
+
+  /*
+    Loading state.
+  */
+
+  output.innerHTML = `
+
+    <div
+      class="empty-state"
+    >
+
+      <div
+        style="
+          font-size:40px;
+        "
+      >
+        🌸
+      </div>
+
+      <strong>
+        Lili travaille sur ton cours…
+      </strong>
+
+      <span>
+        Cela peut prendre quelques secondes.
+      </span>
+
+    </div>
+
+  `;
+
+
+  /*
+    Ask the Edge Function.
+  */
+
+  const result =
+    await callLiliAI({
+
+      action:
+        action,
+
+      materialId:
+        materialId
+
+    });
+
+
+  if (!result) {
+
+    output.innerHTML = `
+
+      <div
+        class="empty-state"
+      >
+
+        Lili n'a pas pu
+        produire le résultat.
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  /*
+    Display AI result.
+  */
+
+  output.innerHTML =
+    formatAIResult(
+      action,
+      result
+    );
+
+
+  /*
+    When Lili created flashcards,
+    try to save them automatically.
+  */
+
+  if (
+    action ===
+    "flashcards"
+  ) {
+
+    await importAIGeneratedFlashcards(
+      materialId,
+      result
+    );
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   FORMAT AI OUTPUT
+   --------------------------------------------------------- */
+
+function formatAIResult(
+  action,
+  result
+) {
+
+  const titles = {
+
+    summary:
+      "📝 Résumé",
+
+    flashcards:
+      "🃏 Flashcards",
+
+    quiz:
+      "❓ Quiz",
+
+    podcast:
+      "🎙️ Podcast de révision",
+
+    mindmap:
+      "🧠 Carte mentale",
+
+    plan:
+      "📚 Préparation au test"
+
+  };
+
+
+  const title =
+    titles[action] ||
+    "✨ Résultat de Lili";
+
+
+  return `
+
+    <div
+      class="output-card"
+    >
+
+      <div
+        class="eyebrow"
+      >
+        LILI AI
+      </div>
+
+
+      <h2>
+        ${title}
+      </h2>
+
+
+      <div
+        class="ai-result-text"
+      >
+        ${escapeHTML(
+          result
+        ).replace(
+          /\n/g,
+          "<br>"
+        )}
+      </div>
+
+    </div>
+
+
+    ${
+      action === "podcast"
+
+        ? `
+
+          <button
+            type="button"
+            class="btn soft"
+            onclick="
+              speakStudyAIResult()
+            "
+          >
+            ▶️ Lire à voix haute
+          </button>
+
+        `
+
+        : ""
+    }
+
+  `;
+
+}
+
+
+/* ---------------------------------------------------------
+   IMPORT AI FLASHCARDS
+   --------------------------------------------------------- */
+
+async function importAIGeneratedFlashcards(
+  materialId,
+  result
+) {
+
+  if (
+    !result
+  ) {
+
+    return;
+
+  }
+
+
+  /*
+    Expected AI format:
+
+    Q: question | A: answer
+
+    One card per line.
+  */
+
+  const lines =
+    String(
+      result
+    )
+      .split(
+        /\n+/
+      )
+      .map(
+        line =>
+          line.trim()
+      )
+      .filter(Boolean);
+
+
+  let added =
+    0;
+
+
+  for (
+    const line of lines
+  ) {
+
+    const match =
+      line.match(
+        /^Q\s*:\s*(.*?)\s*\|\s*A\s*:\s*(.+)$/i
+      );
+
+
+    if (!match) {
+
+      continue;
+
+    }
+
+
+    const question =
+      match[1].trim();
+
+
+    const answer =
+      match[2].trim();
+
+
+    if (
+      !question ||
+      !answer
+    ) {
+
+      continue;
+
+    }
+
+
+    /*
+      Avoid exact duplicates.
+    */
+
+    const duplicate =
+      DATA.flashcards.some(
+        card =>
+          card.material_id ===
+            materialId &&
+          card.front.toLowerCase() ===
+            question.toLowerCase()
+      );
+
+
+    if (
+      duplicate
+    ) {
+
+      continue;
+
+    }
+
+
+    try {
+
+      await insertRow(
+        "flashcards",
+        {
+
+          user_id:
+            session.user.id,
+
+          material_id:
+            materialId,
+
+          front:
+            question,
+
+          back:
+            answer,
+
+          box:
+            1,
+
+          due_date:
+            today()
+
+        }
+      );
+
+
+      added++;
+
+
+    } catch (
+      error
+    ) {
+
+      console.warn(
+        "AI flashcard save failed:",
+        error
+      );
+
+    }
+
+  }
+
+
+  if (
+    added >
+    0
+  ) {
+
+    await refreshData();
+
+
+    toast(
+      `${added} flashcard${
+        added > 1
+          ? "s"
+          : ""
+      } ajoutée${
+        added > 1
+          ? "s"
+          : ""
+      } 🃏`
+    );
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   AI CARD BUTTON
+   --------------------------------------------------------- */
+
+window.createAICards =
+async function (
+  materialId
+) {
+
+  activeMaterialId =
+    materialId;
+
+
+  navigate(
+    "study-ai"
+  );
+
+
+  setTimeout(
+    async () => {
+
+      const selector =
+        $("#study-ai-material");
+
+
+      if (selector) {
+
+        selector.value =
+          materialId;
+
+      }
+
+
+      await runStudyAIAction(
+        "flashcards"
+      );
+
+    },
+    0
+  );
+
+};
+
+
+/* ---------------------------------------------------------
+   AI QUIZ FROM MATERIAL
+   --------------------------------------------------------- */
+
+window.createAIQuiz =
+async function (
+  materialId
+) {
+
+  activeMaterialId =
+    materialId;
+
+
+  navigate(
+    "study-ai"
+  );
+
+
+  setTimeout(
+    async () => {
+
+      const selector =
+        $("#study-ai-material");
+
+
+      if (selector) {
+
+        selector.value =
+          materialId;
+
+      }
+
+
+      await runStudyAIAction(
+        "quiz"
+      );
+
+    },
+    0
+  );
+
+};
+
+
+/* ---------------------------------------------------------
+   AI SUMMARY
+   --------------------------------------------------------- */
+
+window.createAISummary =
+async function (
+  materialId
+) {
+
+  activeMaterialId =
+    materialId;
+
+
+  navigate(
+    "study-ai"
+  );
+
+
+  setTimeout(
+    async () => {
+
+      const selector =
+        $("#study-ai-material");
+
+
+      if (selector) {
+
+        selector.value =
+          materialId;
+
+      }
+
+
+      await runStudyAIAction(
+        "summary"
+      );
+
+    },
+    0
+  );
+
+};
+
+
+/* ---------------------------------------------------------
+   PODCAST SPEECH
+   --------------------------------------------------------- */
+
+window.speakStudyAIResult =
+function () {
+
+  if (
+    !(
+      "speechSynthesis"
+      in window
+    )
+  ) {
+
+    toast(
+      "La lecture vocale n'est pas disponible dans ce navigateur.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+
+  const output =
+    $("#study-ai-output");
+
+
+  if (!output) {
+    return;
+  }
+
+
+  const text =
+    output
+      .innerText
+      .trim();
+
+
+  if (!text) {
+
+    return;
+
+  }
+
+
+  /*
+    Stop previous speech.
+  */
+
+  window.speechSynthesis
+    .cancel();
+
+
+  const utterance =
+    new SpeechSynthesisUtterance(
+      text
+    );
+
+
+  utterance.lang =
+    "fr-FR";
+
+
+  utterance.rate =
+    0.95;
+
+
+  utterance.pitch =
+    1.02;
+
+
+  /*
+    Try to find a French voice.
+  */
+
+  const voices =
+    window.speechSynthesis
+      .getVoices();
+
+
+  const frenchVoice =
+    voices.find(
+      voice =>
+        voice.lang
+          ?.toLowerCase()
+          .startsWith(
+            "fr"
+          )
+    );
+
+
+  if (
+    frenchVoice
+  ) {
+
+    utterance.voice =
+      frenchVoice;
+
+  }
+
+
+  window.speechSynthesis
+    .speak(
+      utterance
+    );
+
+};
+
+
+/* ---------------------------------------------------------
+   STOP PODCAST
+   --------------------------------------------------------- */
+
+window.stopStudyAISpeech =
+function () {
+
+  if (
+    "speechSynthesis"
+    in window
+  ) {
+
+    window.speechSynthesis
+      .cancel();
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   AI CHAT ABOUT SELECTED COURSE
+   --------------------------------------------------------- */
+
+window.askLiliAboutMaterial =
+async function (
+  materialId,
+  question
+) {
+
+  const result =
+    await callLiliAI({
+
+      action:
+        "chat",
+
+      materialId:
+        materialId,
+
+      prompt:
+        question
+
+    });
+
+
+  return result;
+
+};
+
+
+/* ---------------------------------------------------------
+   GENERIC STUDY AI PROMPT
+   --------------------------------------------------------- */
+
+window.askStudyAI =
+async function () {
+
+  const selector =
+    $("#study-ai-material");
+
+
+  const input =
+    $("#study-ai-prompt");
+
+
+  if (
+    !selector ||
+    !input
+  ) {
+
+    return;
+
+  }
+
+
+  const materialId =
+    selector.value;
+
+
+  const question =
+    input.value.trim();
+
+
+  if (!materialId) {
+
+    toast(
+      "Choisis un cours.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+
+  if (!question) {
+
+    toast(
+      "Écris ta question.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+
+  input.value =
+    "";
+
+
+  const output =
+    $("#study-ai-output");
+
+
+  if (output) {
+
+    output.innerHTML = `
+
+      <div
+        class="empty-state"
+      >
+        Lili réfléchit… 🌸
+      </div>
+
+    `;
+
+  }
+
+
+  const result =
+    await callLiliAI({
+
+      action:
+        "chat",
+
+      materialId:
+        materialId,
+
+      prompt:
+        question
+
+    });
+
+
+  if (
+    output &&
+    result
+  ) {
+
+    output.innerHTML =
+      formatAIResult(
+        "chat",
+        result
+      );
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   AI RECOMMENDATION
+   --------------------------------------------------------- */
+
+window.askLiliWhatToStudy =
+async function () {
+
+  const due =
+    DATA.revisions
+      .filter(
+        revision =>
+          !revision.completed &&
+          revision.scheduled_date <=
+            today()
+      )
+      .map(
+        revision =>
+          getMaterial(
+            revision.material_id
+          )?.title
+      )
+      .filter(Boolean);
+
+
+  const weakCourses =
+    DATA.materials
+      .map(
+        material => ({
+
+          title:
+            material.title,
+
+          mastery:
+            calculateMastery(
+              material.id
+            )
+
+        })
+      )
+      .sort(
+        (a,b) =>
+          a.mastery -
+          b.mastery
+      )
+      .slice(
+        0,
+        7
+      );
+
+
+  const result =
+    await callLiliAI({
+
+      action:
+        "chat",
+
+      prompt:
+        `
+        Aide-moi à décider
+        quoi travailler aujourd'hui.
+        Donne-moi un ordre de priorité
+        réaliste et pas surchargé.
+        `,
+
+      context: {
+
+        today:
+          today(),
+
+        dueRevisions:
+          due,
+
+        weakestCourses:
+          weakCourses
+
+      }
+
+    });
+
+
+  return result;
+
+};
+
+
+/* ---------------------------------------------------------
+   PREPARE TEST WITH AI
+   --------------------------------------------------------- */
+
+window.prepareTestWithLili =
+async function (
+  materialId
+) {
+
+  activeMaterialId =
+    materialId;
+
+
+  navigate(
+    "study-ai"
+  );
+
+
+  setTimeout(
+    async () => {
+
+      const selector =
+        $("#study-ai-material");
+
+
+      if (selector) {
+
+        selector.value =
+          materialId;
+
+      }
+
+
+      await runStudyAIAction(
+        "plan"
+      );
+
+    },
+    0
+  );
+
+};
+
+
+/* ---------------------------------------------------------
+   MIND MAP WITH AI
+   --------------------------------------------------------- */
+
+window.createAIMindMap =
+async function (
+  materialId
+) {
+
+  activeMaterialId =
+    materialId;
+
+
+  navigate(
+    "study-ai"
+  );
+
+
+  setTimeout(
+    async () => {
+
+      const selector =
+        $("#study-ai-material");
+
+
+      if (selector) {
+
+        selector.value =
+          materialId;
+
+      }
+
+
+      await runStudyAIAction(
+        "mindmap"
+      );
+
+    },
+    0
+  );
+
+};
+
+
+/* ---------------------------------------------------------
+   PODCAST WITH AI
+   --------------------------------------------------------- */
+
+window.createAIPodcast =
+async function (
+  materialId
+) {
+
+  activeMaterialId =
+    materialId;
+
+
+  navigate(
+    "study-ai"
+  );
+
+
+  setTimeout(
+    async () => {
+
+      const selector =
+        $("#study-ai-material");
+
+
+      if (selector) {
+
+        selector.value =
+          materialId;
+
+      }
+
+
+      await runStudyAIAction(
+        "podcast"
+      );
+
+    },
+    0
+  );
+
+};
+
+
+/* ---------------------------------------------------------
+   AI ACTION BUTTONS
+   --------------------------------------------------------- */
+
+document.addEventListener(
+  "click",
+  event => {
+
+    const button =
+      event.target.closest(
+        "[data-ai-action]"
+      );
+
+
+    if (
+      !button
+    ) {
+
+      return;
+
+    }
+
+
+    const action =
+      button.dataset.aiAction;
+
+
+    runStudyAIAction(
+      action
+    );
+
+  }
+);
+
+
+/* ---------------------------------------------------------
+   AI ENTER KEY
+   --------------------------------------------------------- */
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    /*
+      Ctrl/Cmd + Enter in
+      the Study AI prompt.
+    */
+
+    if (
+      event.key ===
+        "Enter" &&
+      (event.ctrlKey ||
+        event.metaKey)
+    ) {
+
+      const input =
+        event.target.closest(
+          "#study-ai-prompt"
+        );
+
+
+      if (
+        input
+      ) {
+
+        event.preventDefault();
+
+        askStudyAI();
+
+      }
+
+    }
+
+  }
+);
+
+
+/* ---------------------------------------------------------
+   LILI QUICK SUGGESTIONS
+   --------------------------------------------------------- */
+
+document.addEventListener(
+  "click",
+  event => {
+
+    const button =
+      event.target.closest(
+        "[data-lili-message]"
+      );
+
+
+    if (
+      !button
+    ) {
+
+      return;
+
+    }
+
+
+    const message =
+      button.dataset
+        .liliMessage;
+
+
+    if (
+      message
+    ) {
+
+      sendLiliMessage(
+        message
+      );
+
+    }
+
+  }
+);
+/* =========================================================
+   PART 8 — FOCUS MODE + BROWSER PERMISSIONS
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   FOCUS DISPLAY
+   --------------------------------------------------------- */
+
+function updateFocusDisplay() {
+
+  const timer =
+    $("#focus-timer");
+
+
+  if (!timer) {
+    return;
+  }
+
+
+  const minutes =
+    Math.floor(
+      focusState.seconds / 60
+    );
+
+
+  const seconds =
+    focusState.seconds % 60;
+
+
+  timer.textContent =
+    `${String(
+      minutes
+    ).padStart(
+      2,
+      "0"
+    )}:${String(
+      seconds
+    ).padStart(
+      2,
+      "0"
+    )}`;
+
+}
+
+
+/* ---------------------------------------------------------
+   FOCUS PAGE
+   --------------------------------------------------------- */
+
+function renderFocus() {
+
+  updateFocusDisplay();
+
+
+  /*
+    Synchronize preset buttons.
+  */
+
+  const minutes =
+    Math.round(
+      focusState.seconds / 60
+    );
+
+
+  $$(".focus-presets button")
+    .forEach(
+      button => {
+
+        button.classList.toggle(
+          "active",
+          Number(
+            button.dataset.minutes
+          ) === minutes
+        );
+
+      }
+    );
+
+
+  /*
+    Update the number of completed sessions
+    when a statistic exists on the page.
+  */
+
+  const completedSessions =
+    $("#focus-completed-count");
+
+
+  if (
+    completedSessions &&
+    profile
+  ) {
+
+    /*
+      We don't need another query here.
+      The value is refreshed when data loads.
+    */
+
+    completedSessions.textContent =
+      profile.focus_sessions ||
+      0;
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   SET FOCUS PRESET
+   --------------------------------------------------------- */
+
+window.setFocusDuration =
+function (
+  minutes
+) {
+
+  /*
+    Don't allow changing the timer
+    in the middle of a running session.
+  */
+
+  if (
+    focusState.timer
+  ) {
+
+    toast(
+      "Mets la session en pause avant de changer la durée.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+
+  const duration =
+    Number(minutes);
+
+
+  if (
+    !Number.isFinite(
+      duration
+    ) ||
+    duration <= 0
+  ) {
+
+    return;
+
+  }
+
+
+  focusState.seconds =
+    duration * 60;
+
+
+  updateFocusDisplay();
+
+
+  $$(".focus-presets button")
+    .forEach(
+      button =>
+        button.classList.toggle(
+          "active",
+          Number(
+            button.dataset.minutes
+          ) === duration
+        )
+    );
+
+};
+
+
+/* ---------------------------------------------------------
+   START / PAUSE FOCUS
+   --------------------------------------------------------- */
+
+window.toggleFocus =
+async function () {
+
+  const startButton =
+    $("#focus-start");
+
+
+  const status =
+    $("#focus-status");
+
+
+  /*
+    PAUSE
+  */
+
+  if (
+    focusState.timer
+  ) {
+
+    clearInterval(
+      focusState.timer
+    );
+
+
+    focusState.timer =
+      null;
+
+
+    if (startButton) {
+
+      startButton.textContent =
+        "Reprendre";
+
+    }
+
+
+    if (status) {
+
+      status.textContent =
+        "Pause 🌷";
+
+    }
+
+
+    return;
+
+  }
+
+
+  /*
+    START
+  */
+
+  if (
+    focusState.seconds <=
+    0
+  ) {
+
+    focusState.seconds =
+      25 * 60;
+
+  }
+
+
+  if (startButton) {
+
+    startButton.textContent =
+      "Pause";
+
+  }
+
+
+  if (status) {
+
+    status.textContent =
+      "Concentre-toi 🌸";
+
+  }
+
+
+  /*
+    Keep the screen awake if
+    the user already granted
+    that permission.
+  */
+
+  await silentlyRequestWakeLock();
+
+
+  focusState.timer =
+    setInterval(
+      async () => {
+
+        focusState.seconds--;
+
+        updateFocusDisplay();
+
+
+        /*
+          Finished.
+        */
+
+        if (
+          focusState.seconds <=
+          0
+        ) {
+
+          await completeFocusSession();
+
+        }
+
+      },
+      1000
+    );
+
+};
+
+
+/* ---------------------------------------------------------
+   COMPLETE FOCUS SESSION
+   --------------------------------------------------------- */
+
+async function completeFocusSession() {
+
+  if (
+    focusState.timer
+  ) {
+
+    clearInterval(
+      focusState.timer
+    );
+
+
+    focusState.timer =
+      null;
+
+  }
+
+
+  const selectedButton =
+    $(".focus-presets button.active");
+
+
+  const duration =
+    Number(
+      selectedButton?.dataset.minutes ||
+      25
+    );
+
+
+  /*
+    Save Focus session.
+  */
+
+  try {
+
+    await insertRow(
+      "focus_sessions",
+      {
+
+        user_id:
+          session.user.id,
+
+        duration_minutes:
+          duration,
+
+        completed:
+          true
+
+      }
+    );
+
+
+  } catch (
+    error
+  ) {
+
+    /*
+      The timer should still finish
+      even if statistics saving fails.
+    */
+
+    console.warn(
+      "Focus session save failed:",
+      error
+    );
+
+  }
+
+
+  /*
+    Reset timer.
+  */
+
+  focusState.seconds =
+    duration * 60;
+
+
+  updateFocusDisplay();
+
+
+  /*
+    Update UI.
+  */
+
+  const startButton =
+    $("#focus-start");
+
+
+  const status =
+    $("#focus-status");
+
+
+  if (startButton) {
+
+    startButton.textContent =
+      "Commencer";
+
+  }
+
+
+  if (status) {
+
+    status.textContent =
+      "Session terminée ! 🎉";
+
+  }
+
+
+  /*
+    Browser notification.
+  */
+
+  sendFocusNotification();
+
+
+  /*
+    Release wake lock.
+  */
+
+  releaseWakeLock();
+
+
+  toast(
+    `Session Focus terminée · +25 XP 🎯`
+  );
+
+
+  await refreshData();
+
+}
+
+
+/* ---------------------------------------------------------
+   RESET FOCUS
+   --------------------------------------------------------- */
+
+window.resetFocus =
+function () {
+
+  if (
+    focusState.timer
+  ) {
+
+    clearInterval(
+      focusState.timer
+    );
+
+
+    focusState.timer =
+      null;
+
+  }
+
+
+  const activePreset =
+    $(".focus-presets button.active");
+
+
+  const duration =
+    Number(
+      activePreset?.dataset.minutes ||
+      25
+    );
+
+
+  focusState.seconds =
+    duration * 60;
+
+
+  updateFocusDisplay();
+
+
+  $("#focus-start").textContent =
+    "Commencer";
+
+
+  $("#focus-status").textContent =
+    "Prêt(e) à commencer ?";
+
+
+  releaseWakeLock();
+
+};
+
+
+/* ---------------------------------------------------------
+   REQUEST NOTIFICATION PERMISSION
+   --------------------------------------------------------- */
+
+window.requestFocusNotifications =
+async function () {
+
+  /*
+    Notification API doesn't exist
+    in every browser/context.
+  */
+
+  if (
+    !(
+      "Notification"
+      in window
+    )
+  ) {
+
+    toast(
+      "Les notifications du navigateur ne sont pas disponibles ici.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+
+  try {
+
+    const permission =
+      await Notification.requestPermission();
+
+
+    if (
+      permission ===
+      "granted"
+    ) {
+
+      toast(
+        "Notifications autorisées ✨"
+      );
+
+    } else if (
+      permission ===
+      "denied"
+    ) {
+
+      toast(
+        "Les notifications ont été refusées.",
+        "warning"
+      );
+
+    } else {
+
+      toast(
+        "Autorisation non accordée pour le moment.",
+        "warning"
+      );
+
+    }
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      error
+    );
+
+
+    toast(
+      "Impossible de demander l'autorisation.",
+      "error"
+    );
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   SEND FOCUS NOTIFICATION
+   --------------------------------------------------------- */
+
+function sendFocusNotification() {
+
+  if (
+    !(
+      "Notification"
+      in window
+    )
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    Notification.permission !==
+    "granted"
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    new Notification(
+      "STUDY PLANNER 🌸",
+      {
+
+        body:
+          "Ta session Focus est terminée. Bravo pour ton travail ! ✨",
+
+        icon:
+          "favicon.ico"
+
+      }
+    );
+
+  } catch (
+    error
+  ) {
+
+    console.warn(
+      "Notification failed:",
+      error
+    );
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   FULLSCREEN
+   --------------------------------------------------------- */
+
+window.requestFocusFullscreen =
+async function () {
+
+  try {
+
+    /*
+      If we're already in fullscreen,
+      leave it.
+    */
+
+    if (
+      document.fullscreenElement
+    ) {
+
+      await document.exitFullscreen();
+
+      return;
+
+    }
+
+
+    /*
+      Ask the browser.
+    */
+
+    await document.documentElement
+      .requestFullscreen();
+
+
+  } catch (
+    error
+  ) {
+
+    console.warn(
+      "Fullscreen failed:",
+      error
+    );
+
+
+    toast(
+      "Le plein écran n'est pas disponible dans ce navigateur.",
+      "warning"
+    );
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   WAKE LOCK
+   --------------------------------------------------------- */
+
+async function silentlyRequestWakeLock() {
+
+  /*
+    Screen Wake Lock isn't available
+    everywhere.
+
+    We don't repeatedly ask for permission.
+    We simply use it when supported.
+  */
+
+  if (
+    !navigator.wakeLock?.request
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    focusState.wakeLock
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    focusState.wakeLock =
+      await navigator.wakeLock.request(
+        "screen"
+      );
+
+
+    focusState.wakeLock
+      .addEventListener(
+        "release",
+        () => {
+
+          focusState.wakeLock =
+            null;
+
+        }
+      );
+
+
+  } catch (
+    error
+  ) {
+
+    /*
+      Wake Lock is optional.
+      Never stop Focus because it isn't available.
+    */
+
+    console.warn(
+      "Wake Lock failed:",
+      error
+    );
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   MANUAL WAKE LOCK BUTTON
+   --------------------------------------------------------- */
+
+window.requestFocusWakeLock =
+async function () {
+
+  if (
+    !navigator.wakeLock?.request
+  ) {
+
+    toast(
+      "Le maintien de l'écran n'est pas disponible ici.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+
+  try {
+
+    await silentlyRequestWakeLock();
+
+
+    if (
+      focusState.wakeLock
+    ) {
+
+      toast(
+        "L'écran restera allumé pendant le Focus ✨"
+      );
+
+    } else {
+
+      toast(
+        "Impossible de garder l'écran allumé.",
+        "warning"
+      );
+
+    }
+
+  } catch (
+    error
+  ) {
+
+    console.warn(
+      error
+    );
+
+    toast(
+      "Le maintien de l'écran n'est pas disponible.",
+      "warning"
+    );
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   RELEASE WAKE LOCK
+   --------------------------------------------------------- */
+
+async function releaseWakeLock() {
+
+  if (
+    !focusState.wakeLock
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    await focusState.wakeLock.release();
+
+  } catch (
+    error
+  ) {
+
+    console.warn(
+      "Wake Lock release failed:",
+      error
+    );
+
+  }
+
+
+  focusState.wakeLock =
+    null;
+
+}
+
+
+/* ---------------------------------------------------------
+   HANDLE TAB VISIBILITY
+   --------------------------------------------------------- */
+
+document.addEventListener(
+  "visibilitychange",
+  async () => {
+
+    /*
+      If the browser tab becomes
+      visible again, request Wake Lock
+      again when a session is running.
+    */
+
+    if (
+      document.visibilityState ===
+        "visible" &&
+      focusState.timer
+    ) {
+
+      await silentlyRequestWakeLock();
+
+    }
+
+  }
+);
+
+
+/* ---------------------------------------------------------
+   CLEANUP BEFORE PAGE CLOSE
+   --------------------------------------------------------- */
+
+window.addEventListener(
+  "beforeunload",
+  () => {
+
+    if (
+      focusState.timer
+    ) {
+
+      clearInterval(
+        focusState.timer
+      );
+
+    }
+
+  }
+);
+
+
+/* ---------------------------------------------------------
+   FOCUS SHORTCUT
+   --------------------------------------------------------- */
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    /*
+      Space starts/pauses Focus
+      only when the Focus page
+      is active and the user isn't
+      typing in an input.
+    */
+
+    if (
+      activePage !==
+      "focus"
+    ) {
+
+      return;
+
+    }
+
+
+    const tag =
+      document.activeElement
+        ?.tagName
+        ?.toLowerCase();
+
+
+    if (
+      tag ===
+        "input" ||
+      tag ===
+        "textarea" ||
+      tag ===
+        "select"
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      event.code ===
+      "Space"
+    ) {
+
+      event.preventDefault();
+
+      toggleFocus();
+
+    }
+
+  }
+);
+
+
+/* ---------------------------------------------------------
+   AUTOMATIC FOCUS STATUS
+   --------------------------------------------------------- */
+
+function updateFocusStatus() {
+
+  const status =
+    $("#focus-status");
+
+
+  if (
+    !status
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    focusState.timer
+  ) {
+
+    status.textContent =
+      "Concentre-toi 🌸";
+
+    return;
+
+  }
+
+
+  status.textContent =
+    "Prêt(e) à commencer ?";
+
+}
+
+
+/* ---------------------------------------------------------
+   PUBLIC CLEANUP FUNCTION
+   --------------------------------------------------------- */
+
+window.stopFocus =
+async function () {
+
+  if (
+    focusState.timer
+  ) {
+
+    clearInterval(
+      focusState.timer
+    );
+
+
+    focusState.timer =
+      null;
+
+  }
+
+
+  await releaseWakeLock();
+
+
+  $("#focus-start").textContent =
+    "Commencer";
+
+
+  $("#focus-status").textContent =
+    "Session arrêtée.";
+
+};
+/* =========================================================
+   PART 9 — STATISTICS + REWARDS + FRIENDS + PROFILE
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   STATISTICS
+   --------------------------------------------------------- */
+
+function renderStats() {
+
+  const xp =
+    totalXP();
+
+  const streak =
+    calculateStreak();
+
+  const quizzes =
+    DATA.quizAttempts.length;
+
+  const completedRevisions =
+    DATA.revisions.filter(
+      revision =>
+        revision.completed
+    ).length;
+
+
+  /*
+    Main counters.
+  */
+
+  const xpElement =
+    $("#stats-xp");
+
+
+  if (xpElement) {
+
+    xpElement.textContent =
+      xp;
+
+  }
+
+
+  const bestStreakElement =
+    $("#stats-best-streak");
+
+
+  if (bestStreakElement) {
+
+    const storedBest =
+      Number(
+        profile?.best_streak ||
+        0
+      );
+
+
+    bestStreakElement.textContent =
+      Math.max(
+        streak,
+        storedBest
+      );
+
+  }
+
+
+  const quizElement =
+    $("#stats-quizzes");
+
+
+  if (quizElement) {
+
+    quizElement.textContent =
+      quizzes;
+
+  }
+
+
+  const revisionElement =
+    $("#stats-revisions");
+
+
+  if (revisionElement) {
+
+    revisionElement.textContent =
+      completedRevisions;
+
+  }
+
+
+  /*
+    Subject mastery.
+  */
+
+  const subjectContainer =
+    $("#subject-statistics");
+
+
+  if (subjectContainer) {
+
+    if (
+      !DATA.subjects.length
+    ) {
+
+      subjectContainer.innerHTML = `
+
+        <div
+          class="empty-state"
+        >
+          Aucune matière.
+        </div>
+
+      `;
+
+    } else {
+
+      subjectContainer.innerHTML =
+        DATA.subjects
+          .map(
+            subject => {
+
+              const materials =
+                DATA.materials.filter(
+                  material =>
+                    material.subject_id ===
+                    subject.id
+                );
+
+
+              const score =
+                materials.length
+
+                  ? Math.round(
+                      materials.reduce(
+                        (
+                          total,
+                          material
+                        ) =>
+                          total +
+                          calculateMastery(
+                            material.id
+                          ),
+                        0
+                      ) /
+                      materials.length
+                    )
+
+                  : 0;
+
+
+              return `
+
+                <div
+                  style="
+                    margin-bottom:15px;
+                  "
+                >
+
+                  ${masteryRow(
+                    `${subject.icon} ${subject.name}`,
+                    score
+                  )}
+
+                  <small
+                    style="
+                      color:#958b94;
+                    "
+                  >
+
+                    ${
+                      materials.length
+                    }
+                    cours
+
+                    ·
+
+                    ${
+                      materials.filter(
+                        material =>
+                          calculateMastery(
+                            material.id
+                          ) >= 70
+                      ).length
+                    }
+                    bien maîtrisé(s)
+
+                  </small>
+
+                </div>
+
+              `;
+
+            }
+          )
+          .join("");
+
+    }
+
+  }
+
+
+  /*
+    Mastery distribution.
+  */
+
+  const masteryContainer =
+    $("#mastery-statistics");
+
+
+  if (
+    masteryContainer
+  ) {
+
+    const labels = [
+
+      {
+        name:
+          "À découvrir",
+
+        icon:
+          "🌱"
+
+      },
+
+      {
+        name:
+          "En apprentissage",
+
+        icon:
+          "🌷"
+
+      },
+
+      {
+        name:
+          "À renforcer",
+
+        icon:
+          "🧠"
+
+      },
+
+      {
+        name:
+          "Bien maîtrisé",
+
+        icon:
+          "✨"
+
+      },
+
+      {
+        name:
+          "Maîtrisé",
+
+        icon:
+          "🏆"
+
+      }
+
+    ];
+
+
+    masteryContainer.innerHTML =
+      labels
+        .map(
+          item => {
+
+            const count =
+              DATA.materials.filter(
+                material =>
+                  masteryLabel(
+                    calculateMastery(
+                      material.id
+                    )
+                  ) ===
+                  item.name
+              ).length;
+
+
+            return `
+
+              <div
+                class="revision-item"
+              >
+
+                <div
+                  class="revision-dot"
+                ></div>
+
+
+                <div
+                  class="revision-copy"
+                >
+
+                  <strong>
+
+                    ${item.icon}
+                    ${item.name}
+
+                  </strong>
+
+
+                  <small>
+                    ${count}
+                    cours
+                  </small>
+
+                </div>
+
+              </div>
+
+            `;
+
+          }
+        )
+        .join("");
+
+  }
+
+
+  /*
+    Activity chart.
+  */
+
+  renderActivityChart();
+
+}
+
+
+/* ---------------------------------------------------------
+   ACTIVITY CHART
+   --------------------------------------------------------- */
+
+function renderActivityChart() {
+
+  const container =
+    $("#activity-chart");
+
+
+  if (!container) {
+    return;
+  }
+
+
+  /*
+    Show the last 14 days.
+  */
+
+  let html =
+    "";
+
+
+  for (
+    let index = 13;
+    index >= 0;
+    index--
+  ) {
+
+    const date =
+      addDays(
+        today(),
+        -index
+      );
+
+
+    const revisionActivity =
+      DATA.revisions.some(
+        revision =>
+          revision.completed &&
+          revision.completed_at &&
+          revision.completed_at
+            .slice(
+              0,
+              10
+            ) ===
+            date
+      );
+
+
+    const taskActivity =
+      DATA.tasks.some(
+        task =>
+          task.completed &&
+          task.completed_at &&
+          task.completed_at
+            .slice(
+              0,
+              10
+            ) ===
+            date
+      );
+
+
+    const quizActivity =
+      DATA.quizAttempts.some(
+        quiz =>
+          quiz.created_at &&
+          quiz.created_at
+            .slice(
+              0,
+              10
+            ) ===
+            date
+      );
+
+
+    const focusActivity =
+      DATA.tasks.some(
+        task =>
+          task.completed_at &&
+          task.completed_at
+            .slice(
+              0,
+              10
+            ) ===
+            date
+      );
+
+
+    const active =
+      revisionActivity ||
+      taskActivity ||
+      quizActivity ||
+      focusActivity;
+
+
+    html += `
+
+      <div
+        class="
+          activity-day
+          ${
+            active
+              ? "active"
+              : ""
+          }
+        "
+        title="${date}"
+      ></div>
+
+    `;
+
+  }
+
+
+  container.innerHTML =
+    html;
+
+}
+
+
+/* ---------------------------------------------------------
+   REWARDS
+   --------------------------------------------------------- */
+
+function renderRewards() {
+
+  const progress =
+    $("#reward-progress");
+
+
+  const grid =
+    $("#rewards-grid");
+
+
+  if (
+    !progress ||
+    !grid
+  ) {
+
+    return;
+
+  }
+
+
+  const rewardNames = [
+
+    "🌸 Petit jardin",
+
+    "✨ Étoile brillante",
+
+    "🦋 Papillon",
+
+    "🌙 Lune douce",
+
+    "💗 Cœur rose",
+
+    "🪐 Petite planète",
+
+    "🌷 Tulipe",
+
+    "☁️ Nuage",
+
+    "🌈 Arc-en-ciel",
+
+    "🧸 Petit compagnon"
+
+  ];
+
+
+  const completedQuizzes =
+    DATA.quizAttempts.length;
+
+
+  const nextMilestone =
+    (
+      Math.floor(
+        completedQuizzes / 5
+      ) + 1
+    ) *
+    5;
+
+
+  const remaining =
+    Math.max(
+      0,
+      nextMilestone -
+      completedQuizzes
+    );
+
+
+  progress.innerHTML = `
+
+    <div>
+
+      <strong>
+        ${completedQuizzes}
+        quiz terminés
+      </strong>
+
+      <span>
+        ${
+          remaining
+        }
+        quiz avant la prochaine récompense.
+      </span>
+
+    </div>
+
+  `;
+
+
+  grid.innerHTML =
+    rewardNames
+      .map(
+        (
+          reward,
+          index
+        ) => {
+
+          const unlocked =
+            DATA.rewards.some(
+              item =>
+                item.name ===
+                reward
+            );
+
+
+          return `
+
+            <div
+              class="
+                reward-card
+                ${
+                  unlocked
+                    ? ""
+                    : "locked"
+                }
+              "
+            >
+
+              <div>
+
+                ${
+                  unlocked
+                    ? reward
+                    : "🔒"
+                }
+
+              </div>
+
+
+              <strong>
+
+                ${
+                  unlocked
+                    ? reward
+                    : `Récompense ${index + 1}`
+                }
+
+              </strong>
+
+
+              <small>
+
+                ${
+                  unlocked
+
+                    ? "Débloquée ✨"
+
+                    : `À ${
+                        (
+                          index +
+                          1
+                        ) *
+                        5
+                      } quiz`
+                }
+
+              </small>
+
+            </div>
+
+          `;
+
+        }
+      )
+      .join("");
+
+}
+
+
+/* ---------------------------------------------------------
+   FRIENDS PAGE
+   --------------------------------------------------------- */
+
+async function renderFriends() {
+
+  await loadFriendsData();
+
+
+  const friendsList =
+    $("#friends-list");
+
+
+  const requestList =
+    $("#friend-requests");
+
+
+  if (
+    friendsList
+  ) {
+
+    if (
+      !DATA.friends.length
+    ) {
+
+      friendsList.innerHTML = `
+
+        <div
+          class="empty-state"
+        >
+
+          Aucun ami pour le moment. 🫶
+
+        </div>
+
+      `;
+
+    } else {
+
+      friendsList.innerHTML =
+        DATA.friends
+          .map(
+            friendship =>
+              renderFriendCard(
+                friendship.other
+              )
+          )
+          .join("");
+
+    }
+
+  }
+
+
+  if (
+    requestList
+  ) {
+
+    if (
+      !DATA.requests.length
+    ) {
+
+      requestList.innerHTML = `
+
+        <div
+          class="empty-state"
+        >
+
+          Aucune demande reçue.
+
+        </div>
+
+      `;
+
+    } else {
+
+      requestList.innerHTML =
+        DATA.requests
+          .map(
+            request => `
+
+              <div
+                class="friend-card"
+              >
+
+                <span
+                  class="friend-avatar"
+                >
+
+                  ${escapeHTML(
+                    request.other?.avatar ||
+                    "🌸"
+                  )}
+
+                </span>
+
+
+                <div>
+
+                  <strong>
+
+                    ${escapeHTML(
+                      request.other
+                        ?.display_name ||
+                      "Utilisateur"
+                    )}
+
+                  </strong>
+
+
+                  <small>
+                    Demande d'ami
+                  </small>
+
+                </div>
+
+
+                <button
+                  class="small-button"
+                  onclick="
+                    acceptFriendRequest(
+                      '${request.id}'
+                    )
+                  "
+                >
+                  Accepter
+                </button>
+
+              </div>
+
+            `
+          )
+          .join("");
+
+    }
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   LOAD FRIEND DATA
+   --------------------------------------------------------- */
+
+async function loadFriendsData() {
+
+  if (
+    !session?.user
+  ) {
+
+    DATA.friends =
+      [];
+
+    DATA.requests =
+      [];
+
+    return;
+
+  }
+
+
+  try {
+
+    /*
+      Get friendships where
+      the current user participates.
+    */
+
+    const {
+      data:
+        friendships,
+      error:
+        friendshipError
+    } =
+      await supabaseClient
+        .from(
+          "friendships"
+        )
+        .select("*")
+        .or(
+          `user_id.eq.${session.user.id},friend_id.eq.${session.user.id}`
+        )
+        .order(
+          "created_at",
+          {
+            ascending:
+              false
+          }
+        );
+
+
+    if (
+      friendshipError
+    ) {
+
+      throw friendshipError;
+
+    }
+
+
+    const rows =
+      friendships ||
+      [];
+
+
+    /*
+      Extract IDs of other users.
+    */
+
+    const otherIds =
+      [
+        ...new Set(
+          rows
+            .flatMap(
+              row => [
+                row.user_id,
+                row.friend_id
+              ]
+            )
+            .filter(
+              id =>
+                id !==
+                session.user.id
+            )
+        )
+      ];
+
+
+    let profiles =
+      [];
+
+
+    if (
+      otherIds.length
+    ) {
+
+      /*
+        Only fetch public profile fields.
+
+        We deliberately do NOT request:
+        age
+        birth_date
+        email
+      */
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from(
+            "profiles"
+          )
+          .select(
+            `
+              id,
+              display_name,
+              avatar,
+              class_level
+            `
+          )
+          .in(
+            "id",
+            otherIds
+          );
+
+
+      if (
+        error
+      ) {
+
+        throw error;
+
+      }
+
+
+      profiles =
+        data ||
+        [];
+
+    }
+
+
+    DATA.friends =
+      rows
+        .filter(
+          row =>
+            row.status ===
+            "accepted"
+        )
+        .map(
+          row => {
+
+            const otherId =
+              row.user_id ===
+              session.user.id
+
+                ? row.friend_id
+
+                : row.user_id;
+
+
+            return {
+
+              ...row,
+
+              other:
+                profiles.find(
+                  p =>
+                    p.id ===
+                    otherId
+                )
+
+            };
+
+          }
+        );
+
+
+    DATA.requests =
+      rows
+        .filter(
+          row =>
+            row.status ===
+              "pending" &&
+            row.friend_id ===
+              session.user.id
+        )
+        .map(
+          row => {
+
+            return {
+
+              ...row,
+
+              other:
+                profiles.find(
+                  p =>
+                    p.id ===
+                    row.user_id
+                )
+
+            };
+
+          }
+        );
+
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      "Friends loading error:",
+      error
+    );
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   FRIEND CARD
+   --------------------------------------------------------- */
+
+function renderFriendCard(
+  profileData
+) {
+
+  if (
+    !profileData
+  ) {
+
+    return "";
+
+  }
+
+
+  return `
+
+    <div
+      class="friend-card"
+    >
+
+      <span
+        class="friend-avatar"
+      >
+        ${escapeHTML(
+          profileData.avatar ||
+          "🌸"
+        )}
+      </span>
+
+
+      <div>
+
+        <strong>
+          ${escapeHTML(
+            profileData.display_name ||
+            "Utilisateur"
+          )}
+        </strong>
+
+
+        <small>
+
+          ${escapeHTML(
+            profileData.class_level ||
+            ""
+          )}
+
+        </small>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* ---------------------------------------------------------
+   SEARCH FRIEND
+   --------------------------------------------------------- */
+
+async function searchFriendProfile(
+  displayName
+) {
+
+  const name =
+    String(
+      displayName ||
+      ""
+    ).trim();
+
+
+  const result =
+    $("#friend-search-result");
+
+
+  if (
+    !result
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    name.length <
+    2
+  ) {
+
+    result.innerHTML = `
+
+      <div class="empty-state">
+
+        Entre au moins
+        2 caractères.
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  result.innerHTML = `
+
+    <div
+      class="empty-state"
+    >
+      Recherche…
+    </div>
+
+  `;
+
+
+  try {
+
+    /*
+      IMPORTANT:
+
+      We only fetch public profile
+      fields.
+
+      No email.
+      No age.
+      No birth date.
+    */
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from(
+          "profiles"
+        )
+        .select(
+          `
+            id,
+            display_name,
+            avatar,
+            class_level
+          `
+        )
+        .ilike(
+          "display_name",
+          `%${name}%`
+        )
+        .neq(
+          "id",
+          session.user.id
+        )
+        .limit(
+          10
+        );
+
+
+    if (
+      error
+    ) {
+
+      throw error;
+
+    }
+
+
+    if (
+      !data?.length
+    ) {
+
+      result.innerHTML = `
+
+        <div
+          class="empty-state"
+        >
+          Aucun utilisateur trouvé.
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+
+    result.innerHTML =
+      data
+        .map(
+          person => `
+
+            <div
+              class="friend-card"
+            >
+
+              <span
+                class="friend-avatar"
+              >
+
+                ${escapeHTML(
+                  person.avatar ||
+                  "🌸"
+                )}
+
+              </span>
+
+
+              <div>
+
+                <strong>
+                  ${escapeHTML(
+                    person.display_name
+                  )}
+                </strong>
+
+
+                <small>
+                  ${escapeHTML(
+                    person.class_level ||
+                    ""
+                  )}
+                </small>
+
+              </div>
+
+
+              <button
+                class="small-button"
+                onclick="
+                  sendFriendRequest(
+                    '${person.id}'
+                  )
+                "
+              >
+                Ajouter
+              </button>
+
+            </div>
+
+          `
+        )
+        .join("");
+
+
+  } catch (
+    error
+  ) {
+
+    handleAuthError(
+      error
+    );
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   SEND FRIEND REQUEST
+   --------------------------------------------------------- */
+
+window.sendFriendRequest =
+async function (
+  friendId
+) {
+
+  if (
+    !friendId ||
+    !session?.user
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    /*
+      Check if relationship already exists.
+    */
+
+    const {
+      data:
+        existing,
+      error:
+        existingError
+    } =
+      await supabaseClient
+        .from(
+          "friendships"
+        )
+        .select(
+          "id,status,user_id,friend_id"
+        )
+        .or(
+          `
+            and(
+              user_id.eq.${session.user.id},
+              friend_id.eq.${friendId}
+            ),
+            and(
+              user_id.eq.${friendId},
+              friend_id.eq.${session.user.id}
+            )
+          `
+        )
+        .maybeSingle();
+
+
+    if (
+      existingError &&
+      existingError.code !==
+        "PGRST116"
+    ) {
+
+      throw existingError;
+
+    }
+
+
+    if (
+      existing
+    ) {
+
+      if (
+        existing.status ===
+        "accepted"
+      ) {
+
+        toast(
+          "Vous êtes déjà amis.",
+          "warning"
+        );
+
+      } else {
+
+        toast(
+          "Une demande existe déjà.",
+          "warning"
+        );
+
+      }
+
+      return;
+
+    }
+
+
+    await insertRow(
+      "friendships",
+      {
+
+        user_id:
+          session.user.id,
+
+        friend_id:
+          friendId,
+
+        status:
+          "pending"
+
+      }
+    );
+
+
+    toast(
+      "Demande d'ami envoyée 🫶"
+    );
+
+
+  } catch (
+    error
+  ) {
+
+    handleAuthError(
+      error
+    );
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   ACCEPT FRIEND REQUEST
+   --------------------------------------------------------- */
+
+window.acceptFriendRequest =
+async function (
+  friendshipId
+) {
+
+  try {
+
+    await updateRow(
+      "friendships",
+      friendshipId,
+      {
+
+        status:
+          "accepted",
+
+        accepted_at:
+          new Date()
+            .toISOString()
+
+      }
+    );
+
+
+    await refreshData();
+
+
+    toast(
+      "Nouvel ami ajouté 🫶"
+    );
+
+
+  } catch (
+    error
+  ) {
+
+    handleAuthError(
+      error
+    );
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   PROFILE
+   --------------------------------------------------------- */
+
+function renderProfile() {
+
+  if (
+    !profile
+  ) {
+
+    return;
+
+  }
+
+
+  renderTopUser();
+
+
+  /*
+    Build profile avatar selector.
+  */
+
+  const avatarContainer =
+    $("#profile-avatars");
+
+
+  if (
+    avatarContainer
+  ) {
+
+    avatarContainer.innerHTML =
+      AVATARS
+        .map(
+          avatar => `
+
+            <button
+              type="button"
+              class="
+                avatar-option
+                ${
+                  profile.avatar ===
+                  avatar
+                    ? "selected"
+                    : ""
+                }
+              "
+              data-avatar="${escapeHTML(
+                avatar
+              )}"
+            >
+              ${avatar}
+            </button>
+
+          `
+        )
+        .join("");
+
+
+    $(
+      "#profile-avatars .avatar-option"
+    ).forEach(
+      button => {
+
+        button.onclick =
+          () => {
+
+            $(
+              "#profile-avatars .avatar-option"
+            ).forEach(
+              item =>
+                item.classList.remove(
+                  "selected"
+                )
+            );
+
+
+            button.classList.add(
+              "selected"
+            );
+
+          };
+
+      }
+    );
+
+  }
+
+
+}
+
+
+/* ---------------------------------------------------------
+   EXPORT DATA
+   --------------------------------------------------------- */
+
+window.exportStudyPlannerData =
+function () {
+
+  const payload = {
+
+    exportVersion:
+      1,
+
+    exportedAt:
+      new Date()
+        .toISOString(),
+
+    profile: {
+
+      first_name:
+        profile?.first_name ||
+        "",
+
+      last_name:
+        profile?.last_name ||
+        "",
+
+      display_name:
+        profile?.display_name ||
+        "",
+
+      class_level:
+        profile?.class_level ||
+        "",
+
+      avatar:
+        profile?.avatar ||
+        "🌸"
+
+      /*
+        We deliberately don't export
+        the authentication password.
+      */
+
+    },
+
+    subjects:
+      DATA.subjects,
+
+    chapters:
+      DATA.chapters,
+
+    materials:
+      DATA.materials,
+
+    revisions:
+      DATA.revisions,
+
+    flashcards:
+      DATA.flashcards,
+
+    tasks:
+      DATA.tasks,
+
+    events:
+      DATA.events,
+
+    quizAttempts:
+      DATA.quizAttempts,
+
+    rewards:
+      DATA.rewards
+
+  };
+
+
+  const blob =
+    new Blob(
+      [
+        JSON.stringify(
+          payload,
+          null,
+          2
+        )
+      ],
+      {
+        type:
+          "application/json"
+      }
+    );
+
+
+  const url =
+    URL.createObjectURL(
+      blob
+    );
+
+
+  const link =
+    document.createElement(
+      "a"
+    );
+
+
+  link.href =
+    url;
+
+
+  link.download =
+    `study-planner-sauvegarde-${today()}.json`;
+
+
+  document.body.appendChild(
+    link
+  );
+
+
+  link.click();
+
+
+  link.remove();
+
+
+  setTimeout(
+    () =>
+      URL.revokeObjectURL(
+        url
+      ),
+    1000
+  );
+
+
+  toast(
+    "Sauvegarde téléchargée 💾"
+  );
+
+};
+
+
+/* ---------------------------------------------------------
+   IMPORT DATA
+   --------------------------------------------------------- */
+
+window.importStudyPlannerData =
+async function (
+  file
+) {
+
+  if (
+    !file
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    const text =
+      await file.text();
+
+
+    const imported =
+      JSON.parse(
+        text
+      );
+
+
+    if (
+      !imported ||
+      typeof imported !==
+      "object"
+    ) {
+
+      throw new Error(
+        "Invalid backup."
+      );
+
+    }
+
+
+    if (
+      !confirm(
+        "Importer cette sauvegarde ? Les données seront ajoutées à ton espace actuel."
+      )
+    ) {
+
+      return;
+
+    }
+
+
+    /*
+      We deliberately import
+      one entity type at a time.
+
+      Authentication itself is never
+      imported.
+    */
+
+    const subjects =
+      Array.isArray(
+        imported.subjects
+      )
+        ? imported.subjects
+        : [];
+
+
+    let importedSubjects =
+      0;
+
+
+    for (
+      const subject of subjects
+    ) {
+
+      try {
+
+        await insertRow(
+          "subjects",
+          {
+
+            user_id:
+              session.user.id,
+
+            name:
+              subject.name ||
+              "Matière importée",
+
+            icon:
+              subject.icon ||
+              "📚",
+
+            color:
+              subject.color ||
+              "#E9A8BD"
+
+          }
+        );
+
+
+        importedSubjects++;
+
+      } catch (
+        error
+      ) {
+
+        console.warn(
+          error
+        );
+
+      }
+
+    }
+
+
+    await refreshData();
+
+
+    toast(
+      `${importedSubjects} matière(s) importée(s). Pour éviter des associations incorrectes, les autres éléments devront être reconstruits avec leurs nouvelles relations.`,
+      "warning"
+    );
+
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      error
+    );
+
+
+    toast(
+      "Ce fichier de sauvegarde n'est pas valide.",
+      "error"
+    );
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   RESET STUDY DATA
+   --------------------------------------------------------- */
+
+window.resetStudyData =
+async function () {
+
+  if (
+    !session?.user
+  ) {
+
+    return;
+
+  }
+
+
+  const confirmed =
+    confirm(
+      "Supprimer toutes tes données d'étude ? Ton compte email ne sera PAS supprimé."
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  /*
+    Delete child data first.
+
+    This makes the procedure safer
+    if the database relationships
+    are later changed.
+  */
+
+  const tables = [
+
+    "quiz_attempts",
+
+    "revisions",
+
+    "flashcards",
+
+    "calendar_events",
+
+    "tasks",
+
+    "materials",
+
+    "chapters",
+
+    "subjects",
+
+    "rewards",
+
+    "focus_sessions",
+
+    "friendships"
+
+  ];
+
+
+  try {
+
+    for (
+      const table of tables
+    ) {
+
+      /*
+        RLS guarantees that
+        only the user's rows are
+        affected.
+      */
+
+      const {
+        error
+      } =
+        await supabaseClient
+          .from(
+            table
+          )
+          .delete()
+          .eq(
+            "user_id",
+            session.user.id
+          );
+
+
+      if (
+        error
+      ) {
+
+        console.warn(
+          `Could not clear ${table}:`,
+          error
+        );
+
+      }
+
+    }
+
+
+    await refreshData();
+
+
+    toast(
+      "Tes données d'étude ont été supprimées."
+    );
+
+
+  } catch (
+    error
+  ) {
+
+    handleAuthError(
+      error
+    );
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   PROFILE DATA HELPERS
+   --------------------------------------------------------- */
+
+function fillProfileForm() {
+
+  if (
+    !profile
+  ) {
+
+    return;
+
+  }
+
+
+  const fields = {
+
+    "#profile-first-name":
+      profile.first_name ||
+      "",
+
+    "#profile-last-name":
+      profile.last_name ||
+      "",
+
+    "#profile-display-name-input":
+      profile.display_name ||
+      "",
+
+    "#profile-class-input":
+      profile.class_level ||
+      "",
+
+    "#profile-age":
+      profile.age ||
+      "",
+
+    "#profile-birthdate":
+      profile.birth_date ||
+      ""
+
+  };
+
+
+  Object.entries(
+    fields
+  ).forEach(
+    (
+      [
+        selector,
+        value
+      ]
+    ) => {
+
+      const element =
+        $(selector);
+
+
+      if (
+        element
+      ) {
+
+        element.value =
+          value;
+
+      }
+
+    }
+  );
+
+
+  const email =
+    $("#profile-email");
+
+
+  if (
+    email
+  ) {
+
+    email.textContent =
+      session?.user?.email ||
+      "";
+
+  }
+
+
+  const avatar =
+    profile.avatar ||
+    "🌸";
+
+
+  const bigAvatar =
+    $("#profile-avatar");
+
+
+  if (
+    bigAvatar
+  ) {
+
+    bigAvatar.textContent =
+      avatar;
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   SAVE PROFILE FORM
+   --------------------------------------------------------- */
+
+async function handleProfileSave(
+  event
+) {
+
+  event.preventDefault();
+
+
+  if (
+    !session?.user
+  ) {
+
+    return;
+
+  }
+
+
+  const firstName =
+    $(
+      "#profile-first-name"
+    )
+      ?.value
+      .trim();
+
+
+  const lastName =
+    $(
+      "#profile-last-name"
+    )
+      ?.value
+      .trim();
+
+
+  const displayName =
+    $(
+      "#profile-display-name-input"
+    )
+      ?.value
+      .trim();
+
+
+  const classLevel =
+    $(
+      "#profile-class-input"
+    )
+      ?.value
+      .trim();
+
+
+  const ageValue =
+    $(
+      "#profile-age"
+    )
+      ?.value;
+
+
+  const birthDate =
+    $(
+      "#profile-birthdate"
+    )
+      ?.value ||
+    null;
+
+
+  const avatar =
+    $(
+      "#profile-avatars .selected"
+    )
+      ?.dataset
+      .avatar ||
+    profile?.avatar ||
+    "🌸";
+
+
+  const age =
+    ageValue
+      ? Number(ageValue)
+      : null;
+
+
+  try {
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from(
+          "profiles"
+        )
+        .update({
+
+          first_name:
+            firstName,
+
+          last_name:
+            lastName,
+
+          display_name:
+            displayName ||
+            `${firstName} ${lastName}`,
+
+          class_level:
+            classLevel,
+
+          age:
+            age,
+
+          birth_date:
+            birthDate,
+
+          avatar:
+            avatar,
+
+          updated_at:
+            new Date()
+              .toISOString()
+
+        })
+        .eq(
+          "id",
+          session.user.id
+        )
+        .select()
+        .single();
+
+
+    if (
+      error
+    ) {
+
+      throw error;
+
+    }
+
+
+    profile =
+      data;
+
+
+    renderTopUser();
+
+    renderProfile();
+
+
+    toast(
+      "Profil enregistré 🌷"
+    );
+
+
+  } catch (
+    error
+  ) {
+
+    handleAuthError(
+      error
+    );
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   PROFILE QUICK ACTIONS
+   --------------------------------------------------------- */
+
+window.openProfileEmailChange =
+async function () {
+
+  const currentEmail =
+    session?.user?.email ||
+    "";
+
+
+  const newEmail =
+    prompt(
+      "Nouvelle adresse email :",
+      currentEmail
+    );
+
+
+  if (
+    !newEmail ||
+    newEmail ===
+      currentEmail
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    const {
+      error
+    } =
+      await supabaseClient
+        .auth
+        .updateUser({
+          email:
+            newEmail
+        });
+
+
+    if (
+      error
+    ) {
+
+      throw error;
+
+    }
+
+
+    toast(
+      "Vérifie le nouvel email pour confirmer le changement. 💌"
+    );
+
+
+  } catch (
+    error
+  ) {
+
+    handleAuthError(
+      error
+    );
+
+  }
+
+};
+
+
+window.openPasswordChange =
+async function () {
+
+  const password =
+    prompt(
+      "Nouveau mot de passe (6 caractères minimum) :"
+    );
+
+
+  if (
+    !password
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    password.length <
+    6
+  ) {
+
+    toast(
+      "Le mot de passe doit avoir au moins 6 caractères.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+
+  try {
+
+    const {
+      error
+    } =
+      await supabaseClient
+        .auth
+        .updateUser({
+          password
+        });
+
+
+    if (
+      error
+    ) {
+
+      throw error;
+
+    }
+
+
+    toast(
+      "Mot de passe modifié ✅"
+    );
+
+
+  } catch (
+    error
+  ) {
+
+    handleAuthError(
+      error
+    );
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   BEST STREAK
+   --------------------------------------------------------- */
+
+async function updateBestStreak() {
+
+  if (
+    !profile ||
+    !session?.user
+  ) {
+
+    return;
+
+  }
+
+
+  const current =
+    calculateStreak();
+
+
+  const stored =
+    Number(
+      profile.best_streak ||
+      0
+    );
+
+
+  if (
+    current <=
+    stored
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from(
+          "profiles"
+        )
+        .update({
+
+          best_streak:
+            current
+
+        })
+        .eq(
+          "id",
+          session.user.id
+        )
+        .select()
+        .single();
+
+
+    if (
+      error
+    ) {
+
+      throw error;
+
+    }
+
+
+    profile =
+      data;
+
+
+  } catch (
+    error
+  ) {
+
+    console.warn(
+      "Could not update best streak:",
+      error
+    );
+
+  }
+
+}
+/* =========================================================
+   PARTIE 10/10 — INITIALISATION + BRANCHEMENT DE L'INTERFACE
+   ========================================================= */
+
+/* ---------- Helpers de branchement ---------- */
+
+function onClick(selector, callback) {
+  document.querySelectorAll(selector).forEach((element) => {
+    element.addEventListener("click", callback);
+  });
+}
+
+function onChange(selector, callback) {
+  document.querySelectorAll(selector).forEach((element) => {
+    element.addEventListener("change", callback);
+  });
+}
+
+function onSubmit(selector, callback) {
+  document.querySelectorAll(selector).forEach((element) => {
+    element.addEventListener("submit", callback);
+  });
+}
+
+function valeurInput(id) {
+  const element = document.getElementById(id);
+  return element ? element.value.trim() : "";
+}
+
+function valeurCheckbox(id) {
+  const element = document.getElementById(id);
+  return element ? element.checked : false;
+}
+
+/* ---------- Navigation ---------- */
+
+function brancherNavigation() {
+  document.querySelectorAll("[data-page]").forEach((button) => {
+    button.addEventListener("click", async (event) => {
+      event.preventDefault();
+
+      const page = button.dataset.page;
+
+      if (!page) return;
+
+      await navigate(page);
+
+      const mobileMenu = document.getElementById("mobile-menu");
+
+      if (mobileMenu) {
+        mobileMenu.classList.remove("open");
+      }
+    });
+  });
+
+  const mobileToggle = document.getElementById("mobile-menu-button");
+
+  if (mobileToggle) {
+    mobileToggle.addEventListener("click", () => {
+      const mobileMenu = document.getElementById("mobile-menu");
+
+      if (!mobileMenu) return;
+
+      mobileMenu.classList.toggle("open");
+    });
+  }
+}
+
+/* ---------- Authentification ---------- */
+
+function brancherAuthentification() {
+  onClick("#show-login-button", () => {
+    showLoginView();
+  });
+
+  onClick("#show-signup-button", () => {
+    showSignupView();
+  });
+
+  onClick("#forgot-password-button", async () => {
+    await sendPasswordReset();
+  });
+
+  onClick("#logout-button", async () => {
+    await logoutAccount();
+  });
+
+  onSubmit("#login-form", async (event) => {
+    event.preventDefault();
+
+    const email = valeurInput("login-email");
+    const password = document.getElementById("login-password")?.value || "";
+
+    if (!email || !password) {
+      toast("Remplis tous les champs.", "error");
+      return;
+    }
+
+    await loginAccount(email, password);
+  });
+
+  onSubmit("#signup-form", async (event) => {
+    event.preventDefault();
+
+    const data = {
+      firstName: valeurInput("signup-first-name"),
+      lastName: valeurInput("signup-last-name"),
+      displayName: valeurInput("signup-display-name"),
+      email: valeurInput("signup-email"),
+      password:
+        document.getElementById("signup-password")?.value || "",
+      age: valeurInput("signup-age"),
+      birthDate: valeurInput("signup-birth-date"),
+      classLevel: valeurInput("signup-class-level"),
+      avatar: avatarSelectionne
+    };
+
+    await registerAccount(data);
+  });
+
+  onClick("#change-email-button", async () => {
+    const email = valeurInput("profile-email");
+
+    if (!email) {
+      toast("Entre une adresse e-mail.", "error");
+      return;
+    }
+
+    await changeEmail(email);
+  });
+
+  onClick("#change-password-button", async () => {
+    const password =
+      document.getElementById("profile-new-password")?.value || "";
+
+    if (!password) {
+      toast("Entre un nouveau mot de passe.", "error");
+      return;
+    }
+
+    await changePassword(password);
+  });
+}
+
+/* ---------- Profil ---------- */
+
+function brancherProfil() {
+  onSubmit("#profile-form", async (event) => {
+    event.preventDefault();
+
+    if (!profilActuel) {
+      toast("Profil introuvable.", "error");
+      return;
+    }
+
+    const modifications = {
+      first_name: valeurInput("profile-first-name"),
+      last_name: valeurInput("profile-last-name"),
+      display_name: valeurInput("profile-display-name"),
+      age: valeurInput("profile-age")
+        ? Number(valeurInput("profile-age"))
+        : null,
+      birth_date: valeurInput("profile-birth-date") || null,
+      class_level: valeurInput("profile-class-level"),
+      avatar: avatarSelectionne || profilActuel.avatar
+    };
+
+    await saveProfile(modifications);
+  });
+
+  onClick("#profile-avatar-button", () => {
+    openAvatarPicker("profile");
+  });
+
+  onClick("#signup-avatar-button", () => {
+    openAvatarPicker("signup");
+  });
+
+  onClick("#export-data-button", async () => {
+    await exportStudyData();
+  });
+
+  onClick("#reset-study-data-button", async () => {
+    await resetStudyData();
+  });
+
+  onChange("#import-data-file", async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    await importStudyData(file);
+
+    event.target.value = "";
+  });
+}
+
+/* ---------- Matières ---------- */
+
+function brancherMatieres() {
+  onClick("#add-subject-button", () => {
+    openSubjectModal();
+  });
+
+  onSubmit("#subject-form", async (event) => {
+    event.preventDefault();
+
+    await saveSubjectFromForm();
+  });
+}
+
+/* ---------- Chapitres ---------- */
+
+function brancherChapitres() {
+  onClick("#add-chapter-button", () => {
+    if (!idMatiereActive) {
+      toast("Choisis d'abord une matière.", "error");
+      return;
+    }
+
+    openChapterModal();
+  });
+
+  onSubmit("#chapter-form", async (event) => {
+    event.preventDefault();
+
+    await saveChapterFromForm();
+  });
+}
+
+/* ---------- Matériels ---------- */
+
+function brancherMateriels() {
+  onClick("#add-material-button", () => {
+    openAddMaterial();
+  });
+
+  onClick("#add-material-dashboard-button", () => {
+    openAddMaterial();
+  });
+
+  onSubmit("#material-form", async (event) => {
+    event.preventDefault();
+
+    await saveMaterialFromForm();
+  });
+
+  onChange("#material-file", async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      await inspectUploadedFile(file);
+    } catch (error) {
+      console.error(error);
+      toast("Impossible de lire ce fichier.", "error");
+    }
+  });
+}
+
+/* ---------- Révisions ---------- */
+
+function brancherRevisions() {
+  onClick("#add-revision-button", () => {
+    openRevisionModal();
+  });
+
+  onSubmit("#revision-form", async (event) => {
+    event.preventDefault();
+
+    await saveRevisionFromForm();
+  });
+}
+
+/* ---------- Calendrier ---------- */
+
+function brancherCalendrier() {
+  onClick("#calendar-prev-button", async () => {
+    if (typeof calendrierMoisActuel !== "undefined") {
+      calendrierMoisActuel--;
+    }
+
+    if (typeof renderCalendar === "function") {
+      await renderCalendar();
+    }
+  });
+
+  onClick("#calendar-next-button", async () => {
+    if (typeof calendrierMoisActuel !== "undefined") {
+      calendrierMoisActuel++;
+    }
+
+    if (typeof renderCalendar === "function") {
+      await renderCalendar();
+    }
+  });
+
+  onClick("#add-calendar-event-button", () => {
+    openCalendarEventModal();
+  });
+
+  onSubmit("#calendar-event-form", async (event) => {
+    event.preventDefault();
+
+    await saveCalendarEventFromForm();
+  });
+}
+
+/* ---------- To-do ---------- */
+
+function brancherTaches() {
+  onClick("#add-task-button", () => {
+    openTaskModal();
+  });
+
+  onClick("#add-task-dashboard-button", () => {
+    openTaskModal();
+  });
+
+  onSubmit("#task-form", async (event) => {
+    event.preventDefault();
+
+    await saveTaskFromForm();
+  });
+}
+
+/* ---------- Flashcards ---------- */
+
+function brancherFlashcards() {
+  onClick("#add-flashcard-button", () => {
+    openManualFlashcardModal();
+  });
+
+  onSubmit("#flashcard-form", async (event) => {
+    event.preventDefault();
+
+    await saveManualFlashcardFromForm();
+  });
+
+  onClick("#flashcard-flip-button", () => {
+    if (typeof retournerFlashcard === "function") {
+      retournerFlashcard();
+    }
+  });
+}
+
+/* ---------- Quiz ---------- */
+
+function brancherQuiz() {
+  onClick("#start-quiz-button", async () => {
+    await startQuiz();
+  });
+
+  onClick("#restart-quiz-button", () => {
+    resetQuiz();
+  });
+
+  onClick("#quiz-next-button", () => {
+    if (typeof questionSuivanteQuiz === "function") {
+      questionSuivanteQuiz();
+    }
+  });
+}
+
+/* ---------- Focus ---------- */
+
+function brancherFocus() {
+  onClick("[data-focus-minutes]", (event) => {
+    const minutes = Number(event.currentTarget.dataset.focusMinutes);
+
+    if (!Number.isFinite(minutes) || minutes <= 0) return;
+
+    demarrerFocus(minutes);
+  });
+
+  onClick("#focus-start-button", () => {
+    demarrerFocus(focusMinutes || 25);
+  });
+
+  onClick("#focus-pause-button", () => {
+    mettrePauseFocus();
+  });
+
+  onClick("#focus-stop-button", async () => {
+    await arreterFocus();
+  });
+
+  onClick("#focus-notification-button", async () => {
+    await demanderPermissionNotifications();
+  });
+
+  onClick("#focus-fullscreen-button", async () => {
+    await activerPleinEcran();
+  });
+
+  onClick("#focus-wake-lock-button", async () => {
+    await activerWakeLock();
+  });
+}
+
+/* ---------- Lili ---------- */
+
+function brancherLili() {
+  onSubmit("#lili-form", async (event) => {
+    event.preventDefault();
+
+    const input = document.getElementById("lili-input");
+
+    if (!input) return;
+
+    const message = input.value.trim();
+
+    if (!message) return;
+
+    input.value = "";
+
+    await sendLiliMessage(message);
+  });
+
+  document.querySelectorAll("[data-lili-prompt]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const prompt = button.dataset.liliPrompt;
+
+      if (!prompt) return;
+
+      await sendLiliMessage(prompt);
+    });
+  });
+}
+
+/* ---------- Study AI ---------- */
+
+function brancherStudyAI() {
+  document.querySelectorAll("[data-ai-action]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const action = button.dataset.aiAction;
+
+      if (!action) return;
+
+      await executerActionStudyAI(action);
+    });
+  });
+
+  onSubmit("#study-ai-form", async (event) => {
+    event.preventDefault();
+
+    const prompt = valeurInput("study-ai-input");
+
+    if (!prompt) return;
+
+    await askStudyAI(prompt);
+  });
+}
+
+/* ---------- Modales ---------- */
+
+function brancherModales() {
+  onClick("#modal-close", () => {
+    closeModal();
+  });
+
+  onClick("#modal-cancel", () => {
+    closeModal();
+  });
+
+  onClick("#modal-overlay", (event) => {
+    if (event.target.id === "modal-overlay") {
+      closeModal();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeModal();
+    }
+  });
+}
+
+/* ---------- Filtres ---------- */
+
+function brancherFiltres() {
+  onChange("#material-filter-subject", async () => {
+    await renderMaterials();
+  });
+
+  onChange("#material-filter-type", async () => {
+    await renderMaterials();
+  });
+
+  onChange("#revision-filter", async () => {
+    await renderRevisions();
+  });
+
+  onChange("#stats-period", async () => {
+    await renderStats();
+  });
+
+  onChange("#friend-class-filter", async () => {
+    await renderFriends();
+  });
+
+  const searchMaterials = document.getElementById("material-search");
+
+  if (searchMaterials) {
+    searchMaterials.addEventListener("input", async () => {
+      await renderMaterials();
+    });
+  }
+}
+
+/* ---------- Amis ---------- */
+
+function brancherAmis() {
+  onSubmit("#friend-search-form", async (event) => {
+    event.preventDefault();
+
+    const search = valeurInput("friend-search");
+
+    if (!search) {
+      toast("Entre un nom ou un surnom.", "error");
+      return;
+    }
+
+    await searchFriendProfile(search);
+  });
+
+  onClick("#refresh-friends-button", async () => {
+    await renderFriends();
+  });
+}
+
+/* ---------- Rendu initial ---------- */
+
+async function rafraichirInterfaceComplete() {
+  try {
+    if (typeof renderTopUser === "function") {
+      renderTopUser();
+    }
+
+    if (typeof renderDashboard === "function") {
+      await renderDashboard();
+    }
+
+    if (typeof renderSubjects === "function") {
+      await renderSubjects();
+    }
+
+    if (typeof renderMaterials === "function") {
+      await renderMaterials();
+    }
+
+    if (typeof renderRevisions === "function") {
+      await renderRevisions();
+    }
+
+    if (typeof renderCalendar === "function") {
+      await renderCalendar();
+    }
+
+    if (typeof renderTasks === "function") {
+      await renderTasks();
+    }
+
+    if (typeof renderFlashcards === "function") {
+      await renderFlashcards();
+    }
+
+    if (typeof renderQuiz === "function") {
+      await renderQuiz();
+    }
+
+    if (typeof renderStats === "function") {
+      await renderStats();
+    }
+
+    if (typeof renderRewards === "function") {
+      await renderRewards();
+    }
+
+    if (typeof renderFriends === "function") {
+      await renderFriends();
+    }
+
+    if (typeof renderProfile === "function") {
+      await renderProfile();
+    }
+  } catch (error) {
+    console.error("Erreur pendant le rendu initial :", error);
+  }
+}
+
+/* ---------- Sécurité interface ---------- */
+
+function verifierConnexionAvantAction(callback) {
+  return async (...args) => {
+    if (!sessionActuelle || !utilisateurActuel) {
+      showAuthScreen();
+      toast("Connecte-toi pour continuer.", "error");
+      return;
+    }
+
+    return await callback(...args);
+  };
+}
+
+/* ---------- Mise à jour automatique du nom ---------- */
+
+function synchroniserProfilInterface() {
+  if (!profilActuel) return;
+
+  const displayName =
+    profilActuel.display_name ||
+    profilActuel.first_name ||
+    "Étudiant";
+
+  document.querySelectorAll("[data-user-name]").forEach((element) => {
+    element.textContent = displayName;
+  });
+
+  document.querySelectorAll("[data-user-avatar]").forEach((element) => {
+    element.textContent = profilActuel.avatar || "🌸";
+  });
+
+  renderTopUser();
+}
+
+/* ---------- Gestion de visibilité Focus ---------- */
+
+document.addEventListener("visibilitychange", () => {
+  if (
+    document.hidden &&
+    typeof focusEnCours !== "undefined" &&
+    focusEnCours
+  ) {
+    console.log("Onglet masqué pendant une session Focus.");
+  }
+});
+
+/* ---------- Initialisation générale ---------- */
+
+async function initialiserApplication() {
+  try {
+    brancherNavigation();
+    brancherAuthentification();
+    brancherProfil();
+    brancherMatieres();
+    brancherChapitres();
+    brancherMateriels();
+    brancherRevisions();
+    brancherCalendrier();
+    brancherTaches();
+    brancherFlashcards();
+    brancherQuiz();
+    brancherFocus();
+    brancherLili();
+    brancherStudyAI();
+    brancherModales();
+    brancherFiltres();
+    brancherAmis();
+
+    /* Ferme le menu mobile lorsqu'on redimensionne */
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 900) {
+        document
+          .getElementById("mobile-menu")
+          ?.classList.remove("open");
+      }
+    });
+
+    /* Raccourci clavier Focus */
+    document.addEventListener("keydown", (event) => {
+      if (
+        event.key.toLowerCase() === "f" &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey &&
+        !["INPUT", "TEXTAREA"].includes(
+          document.activeElement?.tagName
+        )
+      ) {
+        const focusButton = document.querySelector(
+          '[data-page="focus"]'
+        );
+
+        if (focusButton) {
+          focusButton.click();
+        }
+      }
+    });
+
+    /* Affichage initial */
+    if (typeof montrerPage === "function") {
+      montrerPage(pageActuelle);
+    }
+
+    /* Auth Supabase */
+    await initializeAuthentication();
+
+    if (sessionActuelle && utilisateurActuel) {
+      synchroniserProfilInterface();
+      await rafraichirInterfaceComplete();
+    }
+
+    window.studyPlannerInitialized = true;
+
+    console.log("✅ STUDY PLANNER initialisé.");
+  } catch (error) {
+    console.error("❌ Erreur d'initialisation :", error);
+
+    toast(
+      "Une erreur est survenue pendant le chargement de STUDY PLANNER.",
+      "error"
+    );
+  }
+}
+
+/* ---------- Protection des boutons avant chargement ---------- */
+
+window.addEventListener("beforeunload", () => {
+  try {
+    if (typeof wakeLockSentinel !== "undefined" && wakeLockSentinel) {
+      wakeLockSentinel.release();
+    }
+  } catch (error) {
+    console.warn("Wake Lock :", error);
+  }
+});
+
+/* ---------- Lancement ---------- */
+
+if (document.readyState === "loading") {
+  document.addEventListener(
+    "DOMContentLoaded",
+    initialiserApplication,
+    { once: true }
+  );
+} else {
+  initialiserApplication();
+}
