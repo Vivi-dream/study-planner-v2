@@ -19408,3 +19408,1284 @@ window.spGetFlashcardStats =
   document.head.appendChild(style);
 
 })();
+/* =========================================================
+   THEME PERSONNALISE
+   Roses / Espace / Neutre
+   ========================================================= */
+
+
+/* =========================================================
+   1. THEMES
+   ========================================================= */
+
+const SP_THEMES = {
+  girly: {
+    name: "Roses & fleurs",
+    icon: "🌸"
+  },
+
+  space: {
+    name: "Espace",
+    icon: "🌌"
+  },
+
+  neutral: {
+    name: "Neutre",
+    icon: "✨"
+  }
+};
+
+
+/* =========================================================
+   2. CREER LE FOND
+   ========================================================= */
+
+function spCreateThemeBackground() {
+
+  if (
+    document.getElementById(
+      "sp-theme-background"
+    )
+  ) {
+    return;
+  }
+
+
+  const background =
+    document.createElement("div");
+
+  background.id =
+    "sp-theme-background";
+
+  background.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+
+  background.innerHTML = `
+    <div class="sp-theme-decorations">
+
+      <span class="sp-decoration d1">🌸</span>
+      <span class="sp-decoration d2">🌷</span>
+      <span class="sp-decoration d3">🌹</span>
+      <span class="sp-decoration d4">✿</span>
+      <span class="sp-decoration d5">🌸</span>
+      <span class="sp-decoration d6">♡</span>
+
+    </div>
+
+    <div class="sp-space-decorations">
+
+      <span class="sp-star s1">✦</span>
+      <span class="sp-star s2">✧</span>
+      <span class="sp-star s3">★</span>
+      <span class="sp-star s4">✦</span>
+      <span class="sp-star s5">✧</span>
+      <span class="sp-star s6">⋆</span>
+      <span class="sp-star s7">✦</span>
+      <span class="sp-star s8">★</span>
+
+      <span class="sp-planet p1">🪐</span>
+      <span class="sp-planet p2">🌙</span>
+      <span class="sp-planet p3">🌑</span>
+
+    </div>
+
+    <div class="sp-neutral-decorations">
+
+      <span>✦</span>
+      <span>·</span>
+      <span>✧</span>
+      <span>·</span>
+      <span>✦</span>
+
+    </div>
+  `;
+
+
+  document.body.prepend(background);
+}
+
+
+/* =========================================================
+   3. APPLIQUER LE THEME
+   ========================================================= */
+
+function spApplyTheme(theme) {
+
+  if (!SP_THEMES[theme]) {
+    theme = "neutral";
+  }
+
+
+  spCreateThemeBackground();
+
+
+  document.body.classList.remove(
+    "sp-theme-girly",
+    "sp-theme-space",
+    "sp-theme-neutral"
+  );
+
+
+  document.body.classList.add(
+    `sp-theme-${theme}`
+  );
+
+
+  localStorage.setItem(
+    "study_planner_theme",
+    theme
+  );
+
+
+  /* Met à jour le thème dans le compte Supabase */
+
+  if (supabaseClient && utilisateurActuel) {
+
+    supabaseClient.auth
+      .updateUser({
+        data: {
+          study_theme: theme
+        }
+      })
+      .then(({ error }) => {
+
+        if (error) {
+          console.warn(
+            "Impossible de sauvegarder le thème :",
+            error
+          );
+        }
+
+      });
+
+  }
+}
+
+
+/* =========================================================
+   4. RECUPERER LE THEME
+   ========================================================= */
+
+function spGetSavedTheme() {
+
+  /* Priorité au compte Supabase */
+
+  const themeSupabase =
+    utilisateurActuel
+      ?.user_metadata
+      ?.study_theme;
+
+
+  if (
+    themeSupabase &&
+    SP_THEMES[themeSupabase]
+  ) {
+
+    return themeSupabase;
+
+  }
+
+
+  /* Sinon navigateur */
+
+  const themeLocal =
+    localStorage.getItem(
+      "study_planner_theme"
+    );
+
+
+  if (
+    themeLocal &&
+    SP_THEMES[themeLocal]
+  ) {
+
+    return themeLocal;
+
+  }
+
+
+  return null;
+}
+
+
+/* =========================================================
+   5. CHOIX DU THEME
+   ========================================================= */
+
+function spOpenThemeChoice() {
+
+  openModal(`
+
+    <div class="sp-theme-choice">
+
+      <div class="sp-theme-choice-top">
+        ✨
+      </div>
+
+      <span class="sp-theme-kicker">
+        PERSONNALISE TON ESPACE
+      </span>
+
+      <h2>
+        Quel style veux-tu ?
+      </h2>
+
+      <p class="sp-theme-description">
+        Choisis l'ambiance de ton STUDY PLANNER.
+        Tu pourras la changer plus tard.
+      </p>
+
+
+      <div class="sp-theme-options">
+
+
+        <!-- GIRLY -->
+
+        <button
+          type="button"
+          class="sp-theme-option sp-theme-option-girly"
+          data-sp-theme-choice="girly"
+        >
+
+          <div class="sp-theme-preview roses-preview">
+
+            <span>🌸</span>
+            <span>🌷</span>
+            <span>🌹</span>
+            <span>♡</span>
+
+          </div>
+
+          <strong>
+            🌸 Roses & fleurs
+          </strong>
+
+          <small>
+            Une ambiance douce et fleurie
+          </small>
+
+        </button>
+
+
+        <!-- SPACE -->
+
+        <button
+          type="button"
+          class="sp-theme-option sp-theme-option-space"
+          data-sp-theme-choice="space"
+        >
+
+          <div class="sp-theme-preview space-preview">
+
+            <span>✦</span>
+            <span>🪐</span>
+            <span>✧</span>
+            <span>🌙</span>
+
+          </div>
+
+          <strong>
+            🌌 Espace
+          </strong>
+
+          <small>
+            Une ambiance spatiale et futuriste
+          </small>
+
+        </button>
+
+
+        <!-- NEUTRE -->
+
+        <button
+          type="button"
+          class="sp-theme-option sp-theme-option-neutral"
+          data-sp-theme-choice="neutral"
+        >
+
+          <div class="sp-theme-preview neutral-preview">
+
+            <span>✦</span>
+            <span>✧</span>
+            <span>·</span>
+            <span>♡</span>
+
+          </div>
+
+          <strong>
+            ✨ Neutre
+          </strong>
+
+          <small>
+            Une ambiance douce et simple
+          </small>
+
+        </button>
+
+      </div>
+
+    </div>
+
+  `);
+
+
+  document
+    .querySelectorAll(
+      "[data-sp-theme-choice]"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const theme =
+            button.dataset.spThemeChoice;
+
+          spApplyTheme(theme);
+
+          closeModal();
+
+          toast(
+            `${SP_THEMES[theme].icon} Thème ${
+              SP_THEMES[theme].name
+            } activé`,
+            "success"
+          );
+
+        }
+      );
+
+    });
+}
+
+
+/* =========================================================
+   6. CHOIX SELON LE SEXE
+   ========================================================= */
+
+/*
+ * Le choix "Fille / Garçon / Je préfère ne pas dire"
+ * sert seulement à proposer une ambiance.
+ *
+ * On enregistre uniquement le thème choisi.
+ */
+
+function spOpenPersonalizationChoice() {
+
+  openModal(`
+
+    <div class="sp-theme-choice">
+
+      <div class="sp-theme-choice-top">
+        🌸
+      </div>
+
+      <span class="sp-theme-kicker">
+        BIENVENUE SUR STUDY PLANNER
+      </span>
+
+      <h2>
+        Personnalisons ton espace
+      </h2>
+
+      <p class="sp-theme-description">
+        Choisis ton sexe pour recevoir une ambiance
+        qui te correspond, puis tu pourras modifier
+        le thème quand tu veux.
+      </p>
+
+
+      <div class="sp-gender-options">
+
+
+        <button
+          type="button"
+          class="sp-gender-option"
+          data-sp-gender="girl"
+        >
+
+          <span class="sp-gender-icon">
+            🌸
+          </span>
+
+          <strong>
+            Fille
+          </strong>
+
+          <small>
+            Ambiance roses & fleurs
+          </small>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="sp-gender-option"
+          data-sp-gender="boy"
+        >
+
+          <span class="sp-gender-icon">
+            🌌
+          </span>
+
+          <strong>
+            Garçon
+          </strong>
+
+          <small>
+            Ambiance espace
+          </small>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="sp-gender-option"
+          data-sp-gender="unknown"
+        >
+
+          <span class="sp-gender-icon">
+            ✨
+          </span>
+
+          <strong>
+            Je préfère ne pas dire
+          </strong>
+
+          <small>
+            Ambiance neutre
+          </small>
+
+        </button>
+
+      </div>
+
+    </div>
+
+  `);
+
+
+  document
+    .querySelectorAll(
+      "[data-sp-gender]"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const gender =
+            button.dataset.spGender;
+
+
+          let theme = "neutral";
+
+
+          if (gender === "girl") {
+            theme = "girly";
+          }
+
+
+          if (gender === "boy") {
+            theme = "space";
+          }
+
+
+          spApplyTheme(theme);
+
+          closeModal();
+
+          toast(
+            "✨ Ton espace est personnalisé !",
+            "success"
+          );
+
+        }
+      );
+
+    });
+
+}
+
+
+/* =========================================================
+   7. VERIFIER LE PREMIER CHOIX
+   ========================================================= */
+
+function spCheckThemeAfterLogin() {
+
+  if (
+    !utilisateurActuel
+  ) {
+    return;
+  }
+
+
+  const savedTheme =
+    spGetSavedTheme();
+
+
+  if (savedTheme) {
+
+    spApplyTheme(
+      savedTheme
+    );
+
+    return;
+
+  }
+
+
+  /*
+   * Aucun thème :
+   * première connexion
+   */
+
+  setTimeout(() => {
+
+    spOpenPersonalizationChoice();
+
+  }, 500);
+
+}
+
+
+/* =========================================================
+   8. BOUTON POUR CHANGER LE THEME
+   ========================================================= */
+
+function spCreateThemeButton() {
+
+  if (
+    document.getElementById(
+      "sp-change-theme-button"
+    )
+  ) {
+    return;
+  }
+
+
+  const button =
+    document.createElement("button");
+
+
+  button.id =
+    "sp-change-theme-button";
+
+
+  button.type =
+    "button";
+
+
+  button.title =
+    "Changer l'ambiance";
+
+
+  button.innerHTML =
+    "🎨";
+
+
+  button.addEventListener(
+    "click",
+    () => {
+      spOpenThemeChoice();
+    }
+  );
+
+
+  document.body.appendChild(
+    button
+  );
+
+}
+
+
+/* =========================================================
+   9. INITIALISER
+   ========================================================= */
+
+function spInitializeThemeSystem() {
+
+  spCreateThemeBackground();
+
+  spCreateThemeButton();
+
+
+  const savedTheme =
+    spGetSavedTheme();
+
+
+  if (savedTheme) {
+
+    spApplyTheme(
+      savedTheme
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   10. APRES LA CONNEXION
+   ========================================================= */
+
+const spOriginalShowMainApp =
+  showMainApp;
+
+
+showMainApp = async function() {
+
+  const result =
+    spOriginalShowMainApp();
+
+  if (
+    result &&
+    typeof result.then === "function"
+  ) {
+
+    await result;
+
+  }
+
+
+  spInitializeThemeSystem();
+
+  spCheckThemeAfterLogin();
+
+};
+
+
+/* =========================================================
+   11. STYLE DU FOND
+   ========================================================= */
+
+(function spInjectThemeCSS() {
+
+  if (
+    document.getElementById(
+      "sp-theme-system-css"
+    )
+  ) {
+    return;
+  }
+
+
+  const style =
+    document.createElement("style");
+
+
+  style.id =
+    "sp-theme-system-css";
+
+
+  style.textContent = `
+
+    /* =========================================
+       FOND GENERAL
+       ========================================= */
+
+    #sp-theme-background {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+
+      transition:
+        background 0.6s ease;
+    }
+
+
+    body > *:not(#sp-theme-background) {
+      position: relative;
+      z-index: 1;
+    }
+
+
+    /* =========================================
+       NEUTRE
+       ========================================= */
+
+    body.sp-theme-neutral {
+      background:
+        radial-gradient(
+          circle at 10% 15%,
+          rgba(240, 213, 231, 0.42),
+          transparent 28%
+        ),
+        radial-gradient(
+          circle at 90% 80%,
+          rgba(219, 211, 242, 0.42),
+          transparent 30%
+        ),
+        #faf8fb;
+    }
+
+
+    body.sp-theme-neutral
+    #sp-theme-background {
+      background:
+        radial-gradient(
+          circle at 20% 30%,
+          rgba(255,255,255,0.7) 0 2px,
+          transparent 3px
+        ),
+        radial-gradient(
+          circle at 80% 70%,
+          rgba(255,255,255,0.7) 0 2px,
+          transparent 3px
+        );
+    }
+
+
+    .sp-neutral-decorations {
+      position: absolute;
+      inset: 0;
+      opacity: 0.22;
+      font-size: 1.2rem;
+    }
+
+
+    .sp-neutral-decorations span {
+      position: absolute;
+    }
+
+
+    .sp-neutral-decorations span:nth-child(1) {
+      top: 14%;
+      left: 7%;
+    }
+
+
+    .sp-neutral-decorations span:nth-child(2) {
+      top: 30%;
+      right: 9%;
+    }
+
+
+    .sp-neutral-decorations span:nth-child(3) {
+      bottom: 20%;
+      left: 13%;
+    }
+
+
+    .sp-neutral-decorations span:nth-child(4) {
+      bottom: 9%;
+      right: 20%;
+    }
+
+
+    .sp-neutral-decorations span:nth-child(5) {
+      top: 8%;
+      right: 28%;
+    }
+
+
+    /* =========================================
+       GIRLY / ROSES
+       ========================================= */
+
+    body.sp-theme-girly {
+      background:
+        radial-gradient(
+          circle at 10% 10%,
+          rgba(255, 204, 223, 0.55),
+          transparent 28%
+        ),
+        radial-gradient(
+          circle at 90% 25%,
+          rgba(245, 200, 220, 0.48),
+          transparent 25%
+        ),
+        radial-gradient(
+          circle at 70% 90%,
+          rgba(229, 215, 244, 0.45),
+          transparent 30%
+        ),
+        #fff9fc;
+    }
+
+
+    body.sp-theme-girly
+    #sp-theme-background {
+      background:
+        radial-gradient(
+          circle at 5% 90%,
+          rgba(255,255,255,0.72),
+          transparent 30%
+        );
+    }
+
+
+    .sp-theme-decorations {
+      position: absolute;
+      inset: 0;
+    }
+
+
+    .sp-decoration {
+      position: absolute;
+      opacity: 0.24;
+      filter: blur(0.2px);
+      animation:
+        spFloat 7s ease-in-out infinite;
+    }
+
+
+    .sp-decoration.d1 {
+      top: 10%;
+      left: 5%;
+      font-size: 3.4rem;
+    }
+
+
+    .sp-decoration.d2 {
+      top: 22%;
+      right: 6%;
+      font-size: 2.8rem;
+      animation-delay: -2s;
+    }
+
+
+    .sp-decoration.d3 {
+      bottom: 12%;
+      left: 7%;
+      font-size: 3rem;
+      animation-delay: -4s;
+    }
+
+
+    .sp-decoration.d4 {
+      bottom: 25%;
+      right: 10%;
+      font-size: 2.3rem;
+      animation-delay: -1s;
+    }
+
+
+    .sp-decoration.d5 {
+      top: 65%;
+      right: 3%;
+      font-size: 3.2rem;
+      animation-delay: -3s;
+    }
+
+
+    .sp-decoration.d6 {
+      top: 8%;
+      right: 30%;
+      font-size: 2rem;
+    }
+
+
+    /* =========================================
+       ESPACE
+       ========================================= */
+
+    body.sp-theme-space {
+      background:
+        radial-gradient(
+          circle at 20% 20%,
+          rgba(89, 105, 179, 0.45),
+          transparent 30%
+        ),
+        radial-gradient(
+          circle at 85% 75%,
+          rgba(112, 76, 156, 0.5),
+          transparent 30%
+        ),
+        linear-gradient(
+          135deg,
+          #0d1029,
+          #17163b 45%,
+          #26163e
+        );
+    }
+
+
+    body.sp-theme-space
+    .main-content {
+      color: #f7f5ff;
+    }
+
+
+    body.sp-theme-space
+    .topbar,
+    body.sp-theme-space
+    .panel,
+    body.sp-theme-space
+    .stat-card,
+    body.sp-theme-space
+    .subject-card,
+    body.sp-theme-space
+    .material-card {
+      color: #ffffff;
+    }
+
+
+    .sp-space-decorations {
+      position: absolute;
+      inset: 0;
+    }
+
+
+    .sp-star,
+    .sp-planet {
+      position: absolute;
+    }
+
+
+    .sp-star {
+      color: rgba(255,255,255,0.78);
+      animation:
+        spTwinkle 3s ease-in-out infinite;
+    }
+
+
+    .sp-star.s1 {
+      top: 8%;
+      left: 12%;
+    }
+
+
+    .sp-star.s2 {
+      top: 20%;
+      left: 40%;
+      font-size: 0.8rem;
+    }
+
+
+    .sp-star.s3 {
+      top: 13%;
+      right: 12%;
+    }
+
+
+    .sp-star.s4 {
+      top: 45%;
+      right: 7%;
+    }
+
+
+    .sp-star.s5 {
+      bottom: 18%;
+      left: 10%;
+    }
+
+
+    .sp-star.s6 {
+      bottom: 9%;
+      left: 45%;
+    }
+
+
+    .sp-star.s7 {
+      bottom: 30%;
+      right: 20%;
+    }
+
+
+    .sp-star.s8 {
+      top: 65%;
+      left: 30%;
+    }
+
+
+    .sp-planet.p1 {
+      top: 6%;
+      right: 20%;
+      font-size: 3rem;
+      opacity: 0.28;
+    }
+
+
+    .sp-planet.p2 {
+      bottom: 10%;
+      right: 8%;
+      font-size: 2.7rem;
+      opacity: 0.25;
+    }
+
+
+    .sp-planet.p3 {
+      bottom: 30%;
+      left: 4%;
+      font-size: 2rem;
+      opacity: 0.22;
+    }
+
+
+    /* =========================================
+       ANIMATIONS
+       ========================================= */
+
+    @keyframes spFloat {
+
+      0%,
+      100% {
+        transform:
+          translateY(0)
+          rotate(0deg);
+      }
+
+      50% {
+        transform:
+          translateY(-10px)
+          rotate(3deg);
+      }
+
+    }
+
+
+    @keyframes spTwinkle {
+
+      0%,
+      100% {
+        opacity: 0.3;
+        transform: scale(0.9);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.15);
+      }
+
+    }
+
+
+    /* =========================================
+       BOUTON THEME
+       ========================================= */
+
+    #sp-change-theme-button {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+
+      width: 48px;
+      height: 48px;
+
+      border: 0;
+      border-radius: 50%;
+
+      background:
+        rgba(255,255,255,0.88);
+
+      box-shadow:
+        0 8px 25px rgba(60,40,70,0.15);
+
+      cursor: pointer;
+      font-size: 1.25rem;
+
+      z-index: 100;
+
+      transition:
+        transform 0.2s ease;
+    }
+
+
+    #sp-change-theme-button:hover {
+      transform:
+        translateY(-3px)
+        rotate(8deg);
+    }
+
+
+    /* =========================================
+       CHOIX DU THEME
+       ========================================= */
+
+    .sp-theme-choice {
+      width: min(700px, 100%);
+      margin: 0 auto;
+      text-align: center;
+    }
+
+
+    .sp-theme-choice-top {
+      font-size: 2.7rem;
+      margin-bottom: 5px;
+    }
+
+
+    .sp-theme-kicker {
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      opacity: 0.5;
+    }
+
+
+    .sp-theme-choice h2 {
+      margin: 7px 0;
+    }
+
+
+    .sp-theme-description {
+      opacity: 0.65;
+      max-width: 520px;
+      margin:
+        0 auto 24px;
+      line-height: 1.5;
+    }
+
+
+    .sp-theme-options,
+    .sp-gender-options {
+      display: grid;
+      grid-template-columns:
+        repeat(3, 1fr);
+      gap: 14px;
+    }
+
+
+    .sp-theme-option,
+    .sp-gender-option {
+      border: 1px solid rgba(0,0,0,0.06);
+      background: #fff;
+      border-radius: 22px;
+      padding: 0 0 17px;
+
+      overflow: hidden;
+      cursor: pointer;
+
+      text-align: left;
+
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+
+    .sp-theme-option:hover,
+    .sp-gender-option:hover {
+      transform:
+        translateY(-4px);
+
+      box-shadow:
+        0 12px 30px rgba(50,35,55,0.12);
+    }
+
+
+    .sp-theme-preview {
+      height: 120px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      gap: 10px;
+
+      font-size: 2rem;
+    }
+
+
+    .roses-preview {
+      background:
+        radial-gradient(
+          circle at 30% 30%,
+          #ffffffaa,
+          transparent 30%
+        ),
+        linear-gradient(
+          135deg,
+          #ffe1ec,
+          #f9c5da
+        );
+    }
+
+
+    .space-preview {
+      color: white;
+
+      background:
+        radial-gradient(
+          circle at 20% 30%,
+          #ffffffaa 0 1px,
+          transparent 2px
+        ),
+        linear-gradient(
+          135deg,
+          #15153b,
+          #312052
+        );
+    }
+
+
+    .neutral-preview {
+      background:
+        linear-gradient(
+          135deg,
+          #f8f5fb,
+          #eeeaf6
+        );
+    }
+
+
+    .sp-theme-option > strong,
+    .sp-theme-option > small,
+    .sp-gender-option > strong,
+    .sp-gender-option > small {
+      display: block;
+      padding:
+        0 15px;
+    }
+
+
+    .sp-theme-option > strong,
+    .sp-gender-option > strong {
+      margin-top: 14px;
+    }
+
+
+    .sp-theme-option > small,
+    .sp-gender-option > small {
+      margin-top: 5px;
+      opacity: 0.58;
+    }
+
+
+    .sp-gender-option {
+      text-align: center;
+      padding: 22px 8px;
+    }
+
+
+    .sp-gender-icon {
+      display: block;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+
+    @media (max-width: 650px) {
+
+      .sp-theme-options,
+      .sp-gender-options {
+        grid-template-columns: 1fr;
+      }
+
+
+      #sp-change-theme-button {
+        right: 14px;
+        bottom: 14px;
+      }
+
+    }
+
+  `;
+
+
+  document.head.appendChild(
+    style
+  );
+
+})();
