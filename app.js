@@ -695,8 +695,8 @@ async function registerAccount() {
               avatar
           },
 
-          emailRedirectTo:
-            window.location.origin
+       emailRedirectTo:
+  "https://study-planner-v2-ten.vercel.app"
         }
       });
 
