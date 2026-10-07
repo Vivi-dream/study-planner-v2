@@ -570,8 +570,7 @@ function initializeAvatarPickers() {
    Create account
 ----------------------------- */
 
-async function registerAccount(event) {
-  event.preventDefault();
+async function registerAccount() {
 
   const firstName =
     $("#signup-first-name")
