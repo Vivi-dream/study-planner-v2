@@ -15679,7 +15679,7 @@ function brancherAuthentification() {
       avatar: avatarSelectionne
     };
 
-    await registerAccount(data);
+  await registerAccount();
   });
 
   onClick("#change-email-button", async () => {
