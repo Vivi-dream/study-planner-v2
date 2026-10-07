@@ -1,120 +1,3544 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f6dce8">
-<title>STUDY PLANNER 🌸</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <meta
+    name="description"
+    content="STUDY PLANNER — Organise. Révise. Réussis. 🌸"
+  />
+
+  <meta
+    name="theme-color"
+    content="#f6dce8"
+  />
+
+  <title>STUDY PLANNER 🌸</title>
+
+  <link
+    rel="icon"
+    href="favicon.png"
+  />
+
+  <!-- =====================================================
+       POLICES
+       ===================================================== -->
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+
+  <!-- =====================================================
+       SUPABASE
+       ===================================================== -->
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+
+
+  <!-- =====================================================
+       PDF.JS
+       ===================================================== -->
+
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.min.mjs"
+    type="module"
+  ></script>
+
+
+  <!-- =====================================================
+       JSZIP
+       DOCX / PPTX
+       ===================================================== -->
+
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+  ></script>
+
+
+  <!-- =====================================================
+       TESSERACT
+       OCR
+       ===================================================== -->
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"
+  ></script>
+
+
+  <!-- =====================================================
+       CSS
+       ===================================================== -->
+
+  <link
+    rel="stylesheet"
+    href="styles.css"
+  />
+
 </head>
+
+
 <body>
-<div id="toast-container" class="toast-container"></div>
 
-<section id="auth-screen" class="auth-screen">
-  <div class="petal petal-a"></div><div class="petal petal-b"></div>
-  <div class="auth-card">
-    <div class="brand auth-brand"><span>🌸</span><div><strong>STUDY PLANNER</strong><small>Organise. Révise. Réussis.</small></div></div>
-    <div id="auth-login">
-      <div class="eyebrow">TON ESPACE D'ÉTUDE</div><h1>Bienvenue<br><em>à la maison.</em></h1><p class="muted">Retrouve tes cours, ton planning et Lili au même endroit.</p>
-      <form id="login-form" class="stack">
-        <label>Email<input id="login-email" type="email" autocomplete="email" required></label>
-        <label>Mot de passe<input id="login-password" type="password" autocomplete="current-password" required></label>
-        <button class="btn primary full">Se connecter</button>
-      </form>
-      <button id="reset-password" class="link">Mot de passe oublié ?</button>
-      <p class="auth-switch">Pas encore de compte ? <button id="go-signup" class="link inline">Créer mon compte</button></p>
+
+  <!-- =====================================================
+       AUTHENTIFICATION
+       ===================================================== -->
+
+  <section
+    id="auth-screen"
+    class="auth-screen"
+  >
+
+    <div class="auth-decoration auth-decoration-1">
+      🌸
     </div>
-    <div id="auth-signup" class="hidden">
-      <div class="eyebrow">NOUVEL ESPACE</div><h1>Créons ton<br><em>profil.</em></h1><p class="muted">Ton email sert au compte. Les infos de profil servent à personnaliser ton espace.</p>
-      <form id="signup-form" class="stack">
-        <div class="two"><label>Prénom<input id="signup-first" required></label><label>Nom<input id="signup-last" required></label></div>
-        <div class="two"><label>Nom d'affichage<input id="signup-display" placeholder="Ex. Lili"></label><label>Classe<input id="signup-class" placeholder="Ex. Seconde"></label></div>
-        <div class="two"><label>Âge<input id="signup-age" type="number" min="10" max="100"></label><label>Date de naissance<input id="signup-birth" type="date"></label></div>
-        <label>Email<input id="signup-email" type="email" required></label>
-        <label>Mot de passe<input id="signup-password" type="password" minlength="6" required></label>
-        <div><span class="label-title">Avatar</span><div id="signup-avatars" class="avatar-picker"></div></div>
-        <button class="btn primary full">Créer mon compte 🌸</button>
-      </form>
-      <p class="auth-switch">Déjà un compte ? <button id="go-login" class="link inline">Se connecter</button></p>
+
+    <div class="auth-decoration auth-decoration-2">
+      ✦
     </div>
-  </div>
-</section>
 
-<div id="app" class="app hidden">
-  <aside class="sidebar">
-    <div class="brand"><span>🌸</span><div><strong>STUDY PLANNER</strong><small>Organise. Révise. Réussis.</small></div></div>
-    <nav id="nav">
-      <button data-page="dashboard" class="active">⌂ <span>Accueil</span></button>
-      <button data-page="subjects">📚 <span>Matières</span></button>
-      <button data-page="courses">📖 <span>Cours</span></button>
-      <button data-page="revisions">🔄 <span>Révisions</span></button>
-      <button data-page="calendar">📅 <span>Calendrier</span></button>
-      <button data-page="tasks">✓ <span>To-do</span></button>
-      <button data-page="flashcards">🃏 <span>Flashcards</span></button>
-      <button data-page="quiz">❓ <span>Quiz</span></button>
-      <button data-page="lili">🌸 <span>Lili</span><b>AI</b></button>
-      <button data-page="focus">🎯 <span>Focus</span></button>
-      <button data-page="stats">📊 <span>Stats</span></button>
-      <button data-page="rewards">🎁 <span>Récompenses</span></button>
-      <button data-page="friends">🫶 <span>Amis</span></button>
-    </nav>
-    <button class="profile-mini" data-page="profile"><span id="side-avatar">🌸</span><div><strong id="side-name">Élève</strong><small id="side-streak">0 jour</small></div><b>›</b></button>
-  </aside>
+    <div class="auth-decoration auth-decoration-3">
+      ♡
+    </div>
 
-  <main class="main">
-    <header class="topbar"><button id="mobile-menu" class="icon">☰</button><div><strong id="date-day"></strong><small id="date-full"></small></div><div class="top-user"><button class="icon" data-page="lili">🌸</button><button class="user-chip" data-page="profile"><span id="top-avatar">🌸</span><span id="top-name">Élève</span></button></div></header>
+    <div class="auth-decoration auth-decoration-4">
+      🌷
+    </div>
 
-    <div class="content">
-      <section id="page-dashboard" class="page">
-        <div class="page-head"><div><div class="eyebrow">TON ESPACE</div><h2 id="welcome">Bonjour 🌸</h2><p class="muted">Voici ce qui compte aujourd'hui.</p></div><button id="quick-add-course" class="btn primary">+ Ajouter un cours</button></div>
-        <div class="metric-grid"><div><span>📚</span><strong id="metric-subjects">0</strong><small>Matières</small></div><div><span>🔄</span><strong id="metric-revisions">0</strong><small>À réviser</small></div><div><span>⭐</span><strong id="metric-xp">0</strong><small>XP</small></div><div><span>🔥</span><strong id="metric-streak">0</strong><small>Jours</small></div></div>
-        <div class="grid-2">
-          <section class="card"><div class="card-head"><div><div class="eyebrow">PRIORITÉ</div><h3>Révisions du jour</h3></div><button class="text-btn" data-page="revisions">Tout voir →</button></div><div id="dashboard-revisions" class="list"></div></section>
-          <section class="card level-card"><div class="eyebrow">PROGRESSION</div><div class="level-row"><strong>Niveau <span id="level">1</span></strong><span id="level-xp">0 / 100 XP</span></div><div class="bar"><div id="level-bar"></div></div><p id="level-text" class="muted"></p></section>
-          <section class="card"><div class="card-head"><div><div class="eyebrow">COURS RÉCENTS</div><h3>À reprendre</h3></div><button class="text-btn" data-page="courses">Voir →</button></div><div id="dashboard-courses" class="mini-list"></div></section>
-          <section class="card"><div class="card-head"><div><div class="eyebrow">MAÎTRISE</div><h3>Ta progression</h3></div><button class="text-btn" data-page="stats">Stats →</button></div><div id="dashboard-mastery"></div></section>
-          <section class="card hero-ai"><div class="ai-flower">🌸</div><div><div class="eyebrow">LILI</div><h3 id="dashboard-lili">Je peux t'aider à préparer ton prochain test.</h3><p class="muted">Résumé, flashcards, quiz, carte mentale, podcast et plus.</p></div><button class="btn soft" data-page="lili">Parler à Lili</button></section>
+
+    <div class="auth-card">
+
+
+      <!-- LOGO -->
+
+      <div class="auth-logo">
+
+        <div class="auth-logo-icon">
+          🌸
         </div>
+
+        <div>
+
+          <h1>
+            STUDY PLANNER
+          </h1>
+
+          <p>
+            Organise. Révise. Réussis. 🌸
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           LOGIN
+           ================================================= -->
+
+      <div
+        id="login-view"
+        class="auth-view"
+      >
+
+        <div class="auth-heading">
+
+          <span class="eyebrow">
+            BON RETOUR
+          </span>
+
+          <h2>
+            Prêt à reprendre ?
+          </h2>
+
+          <p>
+            Retrouve tes cours et tes révisions.
+          </p>
+
+        </div>
+
+
+        <form
+          id="login-form"
+          class="form-stack"
+        >
+
+          <label>
+
+            <span>
+              E-mail
+            </span>
+
+            <input
+              id="login-email"
+              type="email"
+              autocomplete="email"
+              placeholder="ton@email.com"
+              required
+            />
+
+          </label>
+
+
+          <label>
+
+            <span>
+              Mot de passe
+            </span>
+
+            <input
+              id="login-password"
+              type="password"
+              autocomplete="current-password"
+              placeholder="••••••••"
+              required
+            />
+
+          </label>
+
+
+          <button
+            type="submit"
+            class="primary-button full-width"
+          >
+            Se connecter
+          </button>
+
+        </form>
+
+
+        <button
+          type="button"
+          id="forgot-password-button"
+          class="text-button"
+        >
+          Mot de passe oublié ?
+        </button>
+
+
+        <div class="auth-divider">
+          <span></span>
+          <em>ou</em>
+          <span></span>
+        </div>
+
+
+        <div class="auth-switch">
+
+          <span>
+            Pas encore de compte ?
+          </span>
+
+          <button
+            type="button"
+            id="show-signup-button"
+            class="text-button strong"
+          >
+            Créer un compte
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           INSCRIPTION
+           ================================================= -->
+
+      <div
+        id="signup-view"
+        class="auth-view hidden"
+      >
+
+        <div class="auth-heading">
+
+          <span class="eyebrow">
+            BIENVENUE
+          </span>
+
+          <h2>
+            Créons ton espace 🌷
+          </h2>
+
+          <p>
+            Ton planner sera personnalisé pour toi.
+          </p>
+
+        </div>
+
+
+        <form
+          id="signup-form"
+          class="form-stack"
+        >
+
+
+          <div class="form-grid-two">
+
+            <label>
+
+              <span>
+                Prénom
+              </span>
+
+              <input
+                id="signup-first-name"
+                type="text"
+                autocomplete="given-name"
+                placeholder="Prénom"
+                required
+              />
+
+            </label>
+
+
+            <label>
+
+              <span>
+                Nom
+              </span>
+
+              <input
+                id="signup-last-name"
+                type="text"
+                autocomplete="family-name"
+                placeholder="Nom"
+                required
+              />
+
+            </label>
+
+          </div>
+
+
+          <label>
+
+            <span>
+              Surnom / nom d'affichage
+            </span>
+
+            <input
+              id="signup-display-name"
+              type="text"
+              maxlength="50"
+              placeholder="Le nom que tu veux utiliser"
+              required
+            />
+
+          </label>
+
+
+          <div class="form-grid-two">
+
+            <label>
+
+              <span>
+                Âge
+              </span>
+
+              <input
+                id="signup-age"
+                type="number"
+                min="10"
+                max="100"
+                placeholder="Âge"
+                required
+              />
+
+            </label>
+
+
+            <label>
+
+              <span>
+                Date de naissance
+              </span>
+
+              <input
+                id="signup-birth-date"
+                type="date"
+              />
+
+            </label>
+
+          </div>
+
+
+          <label>
+
+            <span>
+              Classe / niveau
+            </span>
+
+            <select
+              id="signup-class-level"
+              required
+            >
+
+              <option value="">
+                Choisir
+              </option>
+
+              <option value="6e">
+                6e
+              </option>
+
+              <option value="5e">
+                5e
+              </option>
+
+              <option value="4e">
+                4e
+              </option>
+
+              <option value="3e">
+                3e
+              </option>
+
+              <option value="2nde">
+                2nde
+              </option>
+
+              <option value="1re">
+                1re
+              </option>
+
+              <option value="Terminale">
+                Terminale
+              </option>
+
+              <option value="Études supérieures">
+                Études supérieures
+              </option>
+
+              <option value="Autre">
+                Autre
+              </option>
+
+            </select>
+
+          </label>
+
+
+          <label>
+
+            <span>
+              E-mail
+            </span>
+
+            <input
+              id="signup-email"
+              type="email"
+              autocomplete="email"
+              placeholder="ton@email.com"
+              required
+            />
+
+          </label>
+
+
+          <label>
+
+            <span>
+              Mot de passe
+            </span>
+
+            <input
+              id="signup-password"
+              type="password"
+              minlength="6"
+              autocomplete="new-password"
+              placeholder="6 caractères minimum"
+              required
+            />
+
+          </label>
+
+
+          <div class="avatar-section">
+
+            <div class="avatar-section-title">
+              Ton avatar
+            </div>
+
+            <button
+              type="button"
+              id="signup-avatar-button"
+              class="avatar-picker-trigger"
+            >
+              🌸
+            </button>
+
+            <input
+              id="signup-avatar-value"
+              type="hidden"
+            />
+
+          </div>
+
+
+          <button
+            type="submit"
+            class="primary-button full-width"
+          >
+            Créer mon compte ✨
+          </button>
+
+        </form>
+
+
+        <div class="auth-switch">
+
+          <span>
+            Tu as déjà un compte ?
+          </span>
+
+          <button
+            type="button"
+            id="show-login-button"
+            class="text-button strong"
+          >
+            Se connecter
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- =====================================================
+       APPLICATION
+       ===================================================== -->
+
+  <div
+    id="main-app"
+    class="app-shell hidden"
+  >
+
+
+    <!-- ===================================================
+         SIDEBAR
+         =================================================== -->
+
+    <aside
+      id="sidebar"
+      class="sidebar"
+    >
+
+
+      <!-- BRAND -->
+
+      <div class="sidebar-brand">
+
+        <div class="sidebar-brand-icon">
+          🌸
+        </div>
+
+        <div>
+
+          <div class="sidebar-brand-name">
+            STUDY PLANNER
+          </div>
+
+          <div class="sidebar-brand-subtitle">
+            Organise. Révise. Réussis.
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- NAVIGATION -->
+
+      <nav class="sidebar-nav">
+
+
+        <div class="nav-section-title">
+          PRINCIPAL
+        </div>
+
+
+        <button
+          type="button"
+          class="nav-button active"
+          data-page="dashboard"
+        >
+
+          <span class="nav-icon">
+            🏠
+          </span>
+
+          <span data-page-label="dashboard">
+            Accueil
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="nav-button"
+          data-page="subjects"
+        >
+
+          <span class="nav-icon">
+            📚
+          </span>
+
+          <span data-page-label="subjects">
+            Matières
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="nav-button"
+          data-page="materials"
+        >
+
+          <span class="nav-icon">
+            📄
+          </span>
+
+          <span data-page-label="materials">
+            Cours et fichiers
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="nav-button"
+          data-page="revisions"
+        >
+
+          <span class="nav-icon">
+            🔁
+          </span>
+
+          <span data-page-label="revisions">
+            Révisions
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="nav-button"
+          data-page="calendar"
+        >
+
+          <span class="nav-icon">
+            🗓️
+          </span>
+
+          <span data-page-label="calendar">
+            Calendrier
+          </span>
+
+        </button>
+
+
+        <div class="nav-section-title">
+          APPRENDRE
+        </div>
+
+
+        <button
+          type="button"
+          class="nav-button"
+          data-page="flashcards"
+        >
+
+          <span class="nav-icon">
+            🧠
+          </span>
+
+          <span data-page-label="flashcards">
+            Flashcards
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="nav-button"
+          data-page="quiz"
+        >
+
+          <span class="nav-icon">
+            ❓
+          </span>
+
+          <span data-page-label="quiz">
+            Quiz
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="nav-button"
+          data-page="study-ai"
+        >
+
+          <span class="nav-icon">
+            ✨
+          </span>
+
+          <span data-page-label="studyAI">
+            Study AI
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="nav-button"
+          data-page="lili"
+        >
+
+          <span class="nav-icon">
+            🌸
+          </span>
+
+          <span data-page-label="lili">
+            Lili
+          </span>
+
+        </button>
+
+
+        <div class="nav-section-title">
+          ORGANISATION
+        </div>
+
+
+        <button
+          type="button"
+          class="nav-button"
+          data-page="focus"
+        >
+
+          <span class="nav-icon">
+            ◷
+          </span>
+
+          <span data-page-label="focus">
+            Focus
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="nav-button"
+          data-page="stats"
+        >
+
+          <span class="nav-icon">
+            📊
+          </span>
+
+          <span data-page-label="statistics">
+            Statistiques
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="nav-button"
+          data-page="friends"
+        >
+
+          <span class="nav-icon">
+            ♡
+          </span>
+
+          <span data-page-label="friends">
+            Amis
+          </span>
+
+        </button>
+
+      </nav>
+
+
+      <!-- SIDEBAR BAS -->
+
+      <div class="sidebar-bottom">
+
+
+        <button
+          type="button"
+          class="nav-button"
+          data-page="profile"
+        >
+
+          <span class="nav-icon">
+            ⚙️
+          </span>
+
+          <span data-page-label="settings">
+            Paramètres
+          </span>
+
+        </button>
+
+
+        <div class="sidebar-user-card">
+
+          <div
+            class="sidebar-user-avatar"
+            data-user-avatar
+          >
+            🌸
+          </div>
+
+
+          <div class="sidebar-user-info">
+
+            <strong data-user-name>
+              Étudiant
+            </strong>
+
+            <span id="sidebar-level">
+              Niveau 1
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </aside>
+
+
+
+    <!-- ===================================================
+         MAIN
+         =================================================== -->
+
+    <main class="main-content">
+
+
+      <!-- TOPBAR -->
+
+      <header class="topbar">
+
+
+        <button
+          type="button"
+          id="mobile-menu-button"
+          class="mobile-menu-button"
+          aria-label="Menu"
+        >
+          ☰
+        </button>
+
+
+        <div class="topbar-left">
+
+          <div
+            id="breadcrumb"
+            class="breadcrumb"
+          >
+            Accueil
+          </div>
+
+        </div>
+
+
+        <div class="topbar-right">
+
+
+          <div class="xp-pill">
+
+            ✨
+
+            <span id="topbar-xp">
+              0 XP
+            </span>
+
+          </div>
+
+
+          <div class="streak-pill">
+
+            🔥
+
+            <span id="topbar-streak">
+              0
+            </span>
+
+          </div>
+
+
+          <button
+            type="button"
+            class="topbar-avatar"
+            data-page="profile"
+            data-user-avatar
+          >
+            🌸
+          </button>
+
+        </div>
+
+      </header>
+
+
+
+      <!-- MOBILE MENU -->
+
+      <div
+        id="mobile-menu"
+        class="mobile-menu"
+      >
+
+        <button data-page="dashboard">
+          🏠 Accueil
+        </button>
+
+        <button data-page="subjects">
+          📚 Matières
+        </button>
+
+        <button data-page="materials">
+          📄 Cours
+        </button>
+
+        <button data-page="revisions">
+          🔁 Révisions
+        </button>
+
+        <button data-page="calendar">
+          🗓️ Calendrier
+        </button>
+
+        <button data-page="flashcards">
+          🧠 Flashcards
+        </button>
+
+        <button data-page="quiz">
+          ❓ Quiz
+        </button>
+
+        <button data-page="study-ai">
+          ✨ Study AI
+        </button>
+
+        <button data-page="lili">
+          🌸 Lili
+        </button>
+
+        <button data-page="focus">
+          ◷ Focus
+        </button>
+
+        <button data-page="stats">
+          📊 Statistiques
+        </button>
+
+        <button data-page="friends">
+          ♡ Amis
+        </button>
+
+        <button data-page="profile">
+          ⚙️ Paramètres
+        </button>
+
+      </div>
+
+
+
+      <!-- =================================================
+           DASHBOARD
+           ================================================= -->
+
+      <section
+        id="page-dashboard"
+        class="app-page active"
+      >
+
+        <div class="page-header">
+
+          <div>
+
+            <span class="eyebrow">
+              TON ESPACE
+            </span>
+
+            <h1>
+              Bonjour
+              <span data-user-name>
+                toi
+              </span> 🌸
+            </h1>
+
+            <p class="page-description">
+              Voici ce que tu as à faire aujourd'hui.
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            id="add-material-dashboard-button"
+            class="primary-button"
+          >
+            + Ajouter un cours
+          </button>
+
+        </div>
+
+
+        <div
+          id="dashboard-content"
+          class="dashboard-content"
+        >
+
+          <div class="dashboard-stats-grid">
+
+
+            <div class="stat-card">
+
+              <span class="stat-card-icon">
+                📚
+              </span>
+
+              <span class="stat-card-label">
+                Matières
+              </span>
+
+              <strong
+                id="dashboard-subject-count"
+                class="stat-card-value"
+              >
+                0
+              </strong>
+
+            </div>
+
+
+            <div class="stat-card">
+
+              <span class="stat-card-icon">
+                🔁
+              </span>
+
+              <span class="stat-card-label">
+                Révisions aujourd'hui
+              </span>
+
+              <strong
+                id="dashboard-revision-count"
+                class="stat-card-value"
+              >
+                0
+              </strong>
+
+            </div>
+
+
+            <div class="stat-card">
+
+              <span class="stat-card-icon">
+                ✅
+              </span>
+
+              <span class="stat-card-label">
+                Tâches du jour
+              </span>
+
+              <strong
+                id="dashboard-task-count"
+                class="stat-card-value"
+              >
+                0
+              </strong>
+
+            </div>
+
+
+            <div class="stat-card">
+
+              <span class="stat-card-icon">
+                🔥
+              </span>
+
+              <span class="stat-card-label">
+                Série
+              </span>
+
+              <strong
+                id="dashboard-streak-count"
+                class="stat-card-value"
+              >
+                0 jours
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div class="dashboard-two-columns">
+
+
+            <div class="panel">
+
+              <div class="panel-header">
+
+                <div>
+
+                  <span class="eyebrow">
+                    AUJOURD'HUI
+                  </span>
+
+                  <h2>
+                    À réviser
+                  </h2>
+
+                </div>
+
+                <button
+                  type="button"
+                  class="text-button"
+                  data-page="revisions"
+                >
+                  Tout voir
+                </button>
+
+              </div>
+
+
+              <div
+                id="dashboard-revisions"
+                class="panel-content"
+              ></div>
+
+            </div>
+
+
+            <div class="panel">
+
+              <div class="panel-header">
+
+                <div>
+
+                  <span class="eyebrow">
+                    ORGANISATION
+                  </span>
+
+                  <h2>
+                    Mes tâches
+                  </h2>
+
+                </div>
+
+
+                <button
+                  type="button"
+                  class="text-button"
+                  id="add-task-dashboard-button"
+                >
+                  + Ajouter
+                </button>
+
+              </div>
+
+
+              <div
+                id="dashboard-tasks"
+                class="panel-content"
+              ></div>
+
+            </div>
+
+          </div>
+
+
+          <div class="panel">
+
+            <div class="panel-header">
+
+              <div>
+
+                <span class="eyebrow">
+                  PROGRESSION
+                </span>
+
+                <h2>
+                  Maîtrise de tes matières
+                </h2>
+
+              </div>
+
+            </div>
+
+
+            <div
+              id="dashboard-mastery"
+              class="panel-content"
+            ></div>
+
+          </div>
+
+        </div>
+
       </section>
 
-      <section id="page-subjects" class="page hidden"><div class="page-head"><div><div class="eyebrow">ORGANISATION</div><h2>Matières 📚</h2><p class="muted">Choisis une couleur ou crée la tienne.</p></div><button id="add-subject" class="btn primary">+ Nouvelle matière</button></div><div id="subjects-grid" class="cards-grid"></div></section>
 
-      <section id="page-courses" class="page hidden"><div class="page-head"><div><div class="eyebrow">BIBLIOTHÈQUE</div><h2>Cours & matériel 📖</h2><p class="muted">Notes, PDF, Word, PowerPoint, photos, YouTube…</p></div><button id="add-course" class="btn primary">+ Ajouter</button></div><div class="filters"><input id="course-search" placeholder="Rechercher…"><select id="course-subject"><option value="all">Toutes les matières</option></select><select id="course-chapter"><option value="all">Tous les chapitres</option></select><select id="course-kind"><option value="all">Tous les types</option><option value="notes">Notes</option><option value="pdf">PDF</option><option value="docx">Word</option><option value="pptx">PowerPoint</option><option value="image">Photo / scan</option><option value="youtube">YouTube</option></select></div><div id="courses-grid" class="cards-grid"></div></section>
 
-      <section id="page-revisions" class="page hidden"><div class="page-head"><div><div class="eyebrow">MÉMOIRE</div><h2>Révisions 🔄</h2><p class="muted">Chaque cours peut suivre les étapes 2 · 3 · 5 · 7 jours.</p></div></div><div class="metric-grid small"><div><span>🌸</span><strong id="rev-today">0</strong><small>Aujourd'hui</small></div><div><span>📅</span><strong id="rev-week">0</strong><small>Cette semaine</small></div><div><span>✓</span><strong id="rev-done">0</strong><small>Terminées</small></div></div><section class="card"><div id="revision-list"></div></section></section>
+      <!-- =================================================
+           MATIERES
+           ================================================= -->
 
-      <section id="page-calendar" class="page hidden"><div class="page-head"><div><div class="eyebrow">DATES IMPORTANTES</div><h2>Calendrier 📅</h2><p class="muted">Tests, examens, devoirs et deadlines.</p></div><button id="add-event" class="btn primary">+ Événement</button></div><div class="calendar-layout"><section class="card"><div class="calendar-head"><button id="cal-prev" class="icon">‹</button><h3 id="cal-title"></h3><button id="cal-next" class="icon">›</button></div><div class="weekdays"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div><div id="calendar-grid" class="calendar-grid"></div></section><section class="card"><div class="eyebrow">SÉLECTION</div><h3 id="selected-date"></h3><div id="selected-events" class="list"></div></section></div></section>
+      <section
+        id="page-subjects"
+        class="app-page"
+      >
 
-      <section id="page-tasks" class="page hidden"><div class="page-head"><div><div class="eyebrow">MA JOURNÉE</div><h2>To-do list ✓</h2><p class="muted">Planifie aujourd'hui et la semaine.</p></div><button id="add-task" class="btn primary">+ Tâche</button></div><div class="grid-2"><section class="card"><div class="eyebrow">AUJOURD'HUI</div><h3 id="task-today-title">Aujourd'hui</h3><div id="tasks-today" class="list"></div></section><section class="card"><div class="eyebrow">À VENIR</div><h3>Cette semaine</h3><div id="tasks-week" class="list"></div></section></div></section>
+        <div class="page-header">
 
-      <section id="page-flashcards" class="page hidden"><div class="page-head"><div><div class="eyebrow">MÉMORISATION</div><h2>Flashcards 🃏</h2><p class="muted">Teste ta mémoire active.</p></div><button id="add-card" class="btn primary">+ Carte</button></div><div id="decks" class="deck-grid"></div><div id="flash-area"></div></section>
+          <div>
 
-      <section id="page-quiz" class="page hidden"><div class="page-head"><div><div class="eyebrow">ENTRAÎNEMENT</div><h2>Quiz ❓</h2><p class="muted">Fais un quiz à partir de tes flashcards et de tes cours.</p></div></div><div id="quiz-settings" class="card narrow"><div class="stack"><label>Matière<select id="quiz-subject"></select></label><div class="two"><label>Questions<select id="quiz-length"><option>5</option><option selected>10</option><option>15</option></select></label><label>Difficulté<select id="quiz-difficulty"><option value="easy">Facile</option><option value="medium" selected>Moyenne</option><option value="hard">Difficile</option></select></label></div><button id="start-quiz" class="btn primary">Commencer ✨</button></div></div><div id="quiz-area"></div></section>
+            <span class="eyebrow">
+              ORGANISER
+            </span>
 
-      <section id="page-lili" class="page hidden"><div class="lili-hero"><div class="lili-icon">🌸</div><div><div class="eyebrow">ASSISTANTE IA</div><h2>Lili 💕</h2><p class="muted">Patiente, positive, claire et là pour t'aider à apprendre.</p></div></div><div class="lili-layout"><section class="card chat"><div id="chat-messages" class="messages"><div class="bubble-row"><div class="avatar">🌸</div><div class="bubble">Coucou ! Je peux répondre à tes questions et travailler directement à partir de tes cours. ✨</div></div></div><form id="chat-form" class="chat-form"><input id="chat-input" placeholder="Demande quelque chose à Lili…"><button class="btn primary">Envoyer</button></form><div class="suggestions"><button data-suggest="Que dois-je réviser aujourd'hui ?">Que réviser ?</button><button data-suggest="Comment apprendre ce cours ?">Comment apprendre ?</button><button data-suggest="Aide-moi à préparer un test.">Préparer un test</button></div></section><section class="card"><div class="eyebrow">OUTILS</div><div class="tool-list"><button data-page="study-ai">📝 Résumé</button><button data-page="study-ai">🃏 Flashcards</button><button data-page="study-ai">❓ Quiz</button><button data-page="study-ai">🧠 Carte mentale</button><button data-page="study-ai">🎙️ Podcast</button><button data-page="study-ai">📚 Plan de test</button></div></section></div></section>
+            <h1>
+              Mes matières
+            </h1>
 
-      <section id="page-study-ai" class="page hidden"><div class="page-head"><div><div class="eyebrow">OUTILS IA</div><h2>Study AI ✨</h2><p class="muted">Transforme un cours en matériel de révision.</p></div></div><section class="card"><label>Cours<select id="ai-material"></select></label><div class="ai-actions"><button class="btn soft" data-ai="summary">📝 Résumé</button><button class="btn soft" data-ai="flashcards">🃏 Flashcards</button><button class="btn soft" data-ai="quiz">❓ Quiz</button><button class="btn soft" data-ai="mindmap">🧠 Carte mentale</button><button class="btn soft" data-ai="podcast">🎙️ Podcast</button><button class="btn soft" data-ai="plan">📚 Plan de test</button></div><div id="ai-output" class="ai-output"><div class="empty-state">Choisis un cours.</div></div></section></section>
+            <p class="page-description">
+              Organise tes cours par matière et par leçon.
+            </p>
 
-      <section id="page-focus" class="page hidden"><div class="page-head"><div><div class="eyebrow">CONCENTRATION</div><h2>Focus 🎯</h2><p class="muted">Une tâche, un chronomètre, moins de distractions.</p></div></div><section class="card focus-card"><div class="focus-circle"><strong id="focus-time">25:00</strong><small id="focus-status">Prêt(e) ?</small></div><div class="focus-presets"><button class="active" data-min="25">25 min</button><button data-min="45">45 min</button><button data-min="60">60 min</button></div><div class="button-row center"><button id="focus-start" class="btn primary">Commencer</button><button id="focus-reset" class="btn soft">Réinitialiser</button></div><div class="permission"><strong>Mode calme</strong><p>Un site web ne peut pas bloquer les autres applications ou toutes les notifications du téléphone/PC sans contrôle du système d'exploitation. Ici, les permissions sont optionnelles : notification, plein écran et maintien de l'écran allumé.</p><div class="button-row"><button id="permission-notification" class="btn soft">Notifications</button><button id="permission-fullscreen" class="btn soft">Plein écran</button><button id="permission-wakelock" class="btn soft">Écran allumé</button></div></div></section></section>
+          </div>
 
-      <section id="page-stats" class="page hidden"><div class="page-head"><div><div class="eyebrow">PROGRESSION</div><h2>Statistiques 📊</h2><p class="muted">Vois tes progrès et tes points faibles.</p></div></div><div class="metric-grid small"><div><span>⭐</span><strong id="stats-xp">0</strong><small>XP</small></div><div><span>🔥</span><strong id="stats-best">0</strong><small>Meilleure série</small></div><div><span>❓</span><strong id="stats-quizzes">0</strong><small>Quiz</small></div><div><span>🔄</span><strong id="stats-revs">0</strong><small>Révisions</small></div></div><div class="grid-2"><section class="card"><div class="eyebrow">MATIÈRES</div><h3>Maîtrise</h3><div id="stats-subjects"></div></section><section class="card"><div class="eyebrow">COURS</div><h3>Répartition</h3><div id="stats-mastery"></div></section><section class="card"><div class="eyebrow">ACTIVITÉ</div><h3>14 derniers jours</h3><div id="activity" class="activity"></div></section></div></section>
 
-      <section id="page-rewards" class="page hidden"><div class="page-head"><div><div class="eyebrow">PETITES VICTOIRES</div><h2>Récompenses 🎁</h2><p class="muted">Une décoration tous les 5 quiz terminés.</p></div></div><section class="card"><div id="reward-progress"></div><div id="rewards-grid" class="reward-grid"></div></section></section>
+          <button
+            type="button"
+            id="add-subject-button"
+            class="primary-button"
+          >
+            + Nouvelle matière
+          </button>
 
-      <section id="page-friends" class="page hidden"><div class="page-head"><div><div class="eyebrow">COMMUNAUTÉ</div><h2>Amis 🫶</h2><p class="muted">Pas de messagerie ici : seulement des connexions et des infos d'étude publiques.</p></div></div><div class="grid-2"><section class="card"><div class="eyebrow">AJOUTER</div><h3>Ajouter un ami</h3><form id="friend-form" class="chat-form"><input id="friend-name" placeholder="Nom d'affichage exact"><button class="btn primary">Rechercher</button></form><div id="friend-result"></div></section><section class="card"><div class="eyebrow">MES AMIS</div><h3>Amis</h3><div id="friends-list"></div></section><section class="card"><div class="eyebrow">DEMANDES</div><h3>Demandes reçues</h3><div id="friend-requests"></div></section></div></section>
+        </div>
 
-      <section id="page-profile" class="page hidden"><div class="page-head"><div><div class="eyebrow">MON PROFIL</div><h2>Mon espace 👤</h2><p class="muted">Tes informations privées restent dans ton profil.</p></div></div><div class="profile-layout"><section class="card profile-summary"><div id="profile-avatar-big">🌸</div><h3 id="profile-name-big">Élève</h3><p id="profile-email"></p><span id="profile-class-pill" class="pill"></span></section><section class="card"><form id="profile-form" class="stack"><div class="two"><label>Prénom<input id="profile-first"></label><label>Nom<input id="profile-last"></label></div><div class="two"><label>Nom d'affichage<input id="profile-display"></label><label>Classe<input id="profile-class"></label></div><div class="two"><label>Âge<input id="profile-age" type="number"></label><label>Date de naissance<input id="profile-birth" type="date"></label></div><div><span class="label-title">Avatar</span><div id="profile-avatars" class="avatar-picker"></div></div><button class="btn primary">Enregistrer</button></form></section></div><section class="card data-card"><div class="eyebrow">DONNÉES</div><h3>Sauvegarde</h3><p class="muted">Exporte une copie de tes données d'étude ou réinitialise-les.</p><div class="button-row"><button id="export-data" class="btn soft">Exporter JSON</button><label class="btn soft file-label">Importer JSON<input id="import-data" type="file" accept="application/json" hidden></label><button id="reset-data" class="btn danger">Supprimer mes données</button><button id="logout" class="btn soft">Se déconnecter</button></div></section></section>
-    </div>
-  </main>
-</div>
 
-<div id="modal" class="modal-backdrop hidden"><div id="modal-box" class="modal"><button id="modal-close" class="modal-x">×</button></div></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<script src="app.js"></script>
-</body></html>
+        <div
+          id="subjects-grid"
+          class="subjects-grid"
+        ></div>
+
+
+        <div
+          id="subject-empty-state"
+          class="empty-state hidden"
+        >
+
+          <div class="empty-state-icon">
+            📚
+          </div>
+
+          <h2>
+            Aucune matière pour le moment
+          </h2>
+
+          <p>
+            Commence par créer ta première matière.
+          </p>
+
+          <button
+            type="button"
+            class="primary-button"
+            id="empty-add-subject-button"
+          >
+            Créer ma première matière
+          </button>
+
+        </div>
+
+
+        <div
+          id="active-subject-section"
+          class="active-subject-section hidden"
+        >
+
+          <div class="page-header compact">
+
+            <div>
+
+              <button
+                type="button"
+                class="back-button"
+                id="back-to-subjects-button"
+                data-page="subjects"
+              >
+                ← Matières
+              </button>
+
+              <h2 id="active-subject-title">
+                Matière
+              </h2>
+
+            </div>
+
+
+            <button
+              type="button"
+              id="add-chapter-button"
+              class="primary-button"
+            >
+              + Nouvelle leçon
+            </button>
+
+          </div>
+
+
+          <div
+            id="chapters-list"
+            class="chapters-list"
+          ></div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           COURS ET FICHIERS
+           ================================================= -->
+
+      <section
+        id="page-materials"
+        class="app-page"
+      >
+
+        <div class="page-header">
+
+          <div>
+
+            <span class="eyebrow">
+              COURS
+            </span>
+
+            <h1>
+              Cours et fichiers
+            </h1>
+
+            <p class="page-description">
+              Retrouve tes notes, cours, résumés,
+              flashcards et quiz.
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            id="add-material-button"
+            class="primary-button"
+          >
+            + Ajouter un cours
+          </button>
+
+        </div>
+
+
+        <!-- RECHERCHE -->
+
+        <div class="materials-toolbar">
+
+          <div class="search-box">
+
+            <span>
+              🔎
+            </span>
+
+            <input
+              id="material-search"
+              type="search"
+              placeholder="Rechercher un cours..."
+            />
+
+          </div>
+
+
+          <select
+            id="material-filter-subject"
+          >
+
+            <option value="">
+              Toutes les matières
+            </option>
+
+          </select>
+
+
+          <select
+            id="material-filter-type"
+          >
+
+            <option value="">
+              Tous les types
+            </option>
+
+            <option value="notes">
+              Notes
+            </option>
+
+            <option value="resume_detaille">
+              Résumé détaillé
+            </option>
+
+            <option value="resume_examen">
+              Résumé examen
+            </option>
+
+            <option value="flashcards">
+              Flashcards
+            </option>
+
+            <option value="quiz">
+              Quiz
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <!-- MATIERE / LEÇON ACTIVE -->
+
+        <div
+          id="current-lesson-context"
+          class="lesson-context hidden"
+        >
+
+          <div>
+
+            <span class="eyebrow">
+              LEÇON
+            </span>
+
+            <h2 id="current-lesson-title">
+              —
+            </h2>
+
+          </div>
+
+          <button
+            type="button"
+            class="secondary-button"
+            id="add-material-to-lesson-button"
+          >
+            + Ajouter
+          </button>
+
+        </div>
+
+
+        <!-- ACTIONS IA -->
+
+        <div
+          id="material-ai-actions"
+          class="material-ai-actions"
+          style="display:none;"
+        >
+
+          <div class="material-ai-actions-header">
+
+            <div>
+
+              <span class="eyebrow">
+                ✨ AVEC LILI
+              </span>
+
+              <h3>
+                Transformer ce cours
+              </h3>
+
+              <p>
+                Crée des outils pour comprendre,
+                mémoriser et réviser.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="material-ai-action-grid">
+
+
+            <button
+              type="button"
+              class="material-ai-action"
+              data-study-file-action="resume-detaille"
+              data-material-id=""
+            >
+
+              <span class="material-ai-action-icon">
+                📚
+              </span>
+
+              <span>
+
+                <strong>
+                  Résumé détaillé
+                </strong>
+
+                <small>
+                  Comprendre tout le cours
+                </small>
+
+              </span>
+
+            </button>
+
+
+            <button
+              type="button"
+              class="material-ai-action"
+              data-study-file-action="resume-examen"
+              data-material-id=""
+            >
+
+              <span class="material-ai-action-icon">
+                🎯
+              </span>
+
+              <span>
+
+                <strong>
+                  Résumé examen
+                </strong>
+
+                <small>
+                  Les choses à retenir
+                </small>
+
+              </span>
+
+            </button>
+
+
+            <button
+              type="button"
+              class="material-ai-action"
+              data-study-file-action="flashcards"
+              data-material-id=""
+            >
+
+              <span class="material-ai-action-icon">
+                🧠
+              </span>
+
+              <span>
+
+                <strong>
+                  Créer des flashcards
+                </strong>
+
+                <small>
+                  Mémoriser les notions
+                </small>
+
+              </span>
+
+            </button>
+
+
+            <button
+              type="button"
+              class="material-ai-action"
+              data-study-file-action="quiz"
+              data-material-id=""
+            >
+
+              <span class="material-ai-action-icon">
+                ❓
+              </span>
+
+              <span>
+
+                <strong>
+                  Créer un quiz
+                </strong>
+
+                <small>
+                  Tester tes connaissances
+                </small>
+
+              </span>
+
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- LISTE DES MATERIELS -->
+
+        <div
+          id="materials-grid"
+          class="materials-grid"
+        ></div>
+
+
+        <!-- FICHIERS DE LA LEÇON -->
+
+        <div
+          id="lesson-generated-files"
+          class="lesson-generated-files"
+        >
+
+          <div class="panel-header">
+
+            <div>
+
+              <span class="eyebrow">
+                📁 TA LEÇON
+              </span>
+
+              <h3>
+                Mes fichiers
+              </h3>
+
+              <p>
+                Tes notes, résumés, flashcards et quiz.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div
+            id="lesson-generated-files-list"
+            class="lesson-generated-files-list"
+          ></div>
+
+        </div>
+
+
+        <div
+          id="materials-empty-state"
+          class="empty-state hidden"
+        >
+
+          <div class="empty-state-icon">
+            📄
+          </div>
+
+          <h2>
+            Aucun cours pour le moment
+          </h2>
+
+          <p>
+            Ajoute tes notes, un PDF, une photo,
+            un document ou un lien YouTube.
+          </p>
+
+          <button
+            type="button"
+            class="primary-button"
+            id="empty-add-material-button"
+          >
+            Ajouter un cours
+          </button>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           REVISIONS
+           ================================================= -->
+
+      <section
+        id="page-revisions"
+        class="app-page"
+      >
+
+        <div class="page-header">
+
+          <div>
+
+            <span class="eyebrow">
+              MÉMORISATION
+            </span>
+
+            <h1>
+              Mes révisions
+            </h1>
+
+            <p class="page-description">
+              Révise au bon moment grâce à la répétition espacée.
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            id="add-revision-button"
+            class="primary-button"
+          >
+            + Ajouter
+          </button>
+
+        </div>
+
+
+        <div class="revision-summary-grid">
+
+
+          <div class="stat-card">
+
+            <span class="stat-card-icon">
+              🔴
+            </span>
+
+            <span class="stat-card-label">
+              En retard
+            </span>
+
+            <strong
+              id="revision-overdue-count"
+              class="stat-card-value"
+            >
+              0
+            </strong>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <span class="stat-card-icon">
+              📅
+            </span>
+
+            <span class="stat-card-label">
+              Aujourd'hui
+            </span>
+
+            <strong
+              id="revision-today-count"
+              class="stat-card-value"
+            >
+              0
+            </strong>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <span class="stat-card-icon">
+              🌱
+            </span>
+
+            <span class="stat-card-label">
+              À venir
+            </span>
+
+            <strong
+              id="revision-upcoming-count"
+              class="stat-card-value"
+            >
+              0
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <div class="filter-row">
+
+          <select
+            id="revision-filter"
+          >
+
+            <option value="all">
+              Toutes les révisions
+            </option>
+
+            <option value="today">
+              Aujourd'hui
+            </option>
+
+            <option value="upcoming">
+              À venir
+            </option>
+
+            <option value="completed">
+              Terminées
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div
+          id="revisions-list"
+          class="revisions-list"
+        ></div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           CALENDRIER
+           ================================================= -->
+
+      <section
+        id="page-calendar"
+        class="app-page"
+      >
+
+        <div class="page-header">
+
+          <div>
+
+            <span class="eyebrow">
+              ORGANISATION
+            </span>
+
+            <h1>
+              Calendrier
+            </h1>
+
+            <p class="page-description">
+              Contrôles, devoirs, examens et échéances.
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            id="add-calendar-event-button"
+            class="primary-button"
+          >
+            + Événement
+          </button>
+
+        </div>
+
+
+        <div class="calendar-toolbar">
+
+          <button
+            type="button"
+            id="calendar-prev-button"
+            class="secondary-button"
+          >
+            ←
+          </button>
+
+
+          <h2 id="calendar-month-title">
+            Calendrier
+          </h2>
+
+
+          <button
+            type="button"
+            id="calendar-next-button"
+            class="secondary-button"
+          >
+            →
+          </button>
+
+        </div>
+
+
+        <div
+          id="calendar-grid"
+          class="calendar-grid"
+        ></div>
+
+
+        <div class="panel calendar-events-panel">
+
+          <div class="panel-header">
+
+            <div>
+
+              <span class="eyebrow">
+                ÉCHÉANCES
+              </span>
+
+              <h2>
+                Mes événements
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div
+            id="calendar-events-list"
+            class="panel-content"
+          ></div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           FLASHCARDS
+           ================================================= -->
+
+      <section
+        id="page-flashcards"
+        class="app-page"
+      >
+
+        <div class="page-header">
+
+          <div>
+
+            <span class="eyebrow">
+              MÉMORISER
+            </span>
+
+            <h1>
+              Flashcards
+            </h1>
+
+            <p class="page-description">
+              Entraîne ta mémoire et retrouve tes cartes difficiles.
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            id="add-flashcard-button"
+            class="primary-button"
+          >
+            + Créer des flashcards
+          </button>
+
+        </div>
+
+
+        <div class="learning-intro-card">
+
+          <div class="learning-intro-icon">
+            🧠
+          </div>
+
+          <div>
+
+            <h2>
+              Tes flashcards
+            </h2>
+
+            <p>
+              Les flashcards créées à partir de tes cours
+              restent enregistrées dans leurs leçons.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div
+          id="flashcards-decks"
+          class="flashcards-decks"
+        ></div>
+
+
+        <div
+          id="flashcards-empty-state"
+          class="empty-state hidden"
+        >
+
+          <div class="empty-state-icon">
+            🧠
+          </div>
+
+          <h2>
+            Pas encore de flashcards
+          </h2>
+
+          <p>
+            Crée-les à partir d'un cours ou ajoute-les toi-même.
+          </p>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           QUIZ
+           ================================================= -->
+
+      <section
+        id="page-quiz"
+        class="app-page"
+      >
+
+        <div class="page-header">
+
+          <div>
+
+            <span class="eyebrow">
+              S'ENTRAÎNER
+            </span>
+
+            <h1>
+              Quiz
+            </h1>
+
+            <p class="page-description">
+              Teste tes connaissances et retrouve tes erreurs.
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            id="start-quiz-button"
+            class="primary-button"
+          >
+            + Commencer un quiz
+          </button>
+
+        </div>
+
+
+        <div
+          id="quiz-content"
+          class="quiz-content"
+        ></div>
+
+
+        <div
+          id="quiz-setup"
+          class="quiz-setup"
+        >
+
+          <div class="quiz-setup-card">
+
+            <div class="quiz-setup-icon">
+              ❓
+            </div>
+
+            <h2>
+              Prête à tester tes connaissances ?
+            </h2>
+
+            <p>
+              Choisis un cours ou un quiz enregistré
+              pour commencer.
+            </p>
+
+            <button
+              type="button"
+              class="primary-button"
+              id="quiz-start-empty-button"
+            >
+              Commencer
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <div
+          id="quiz-result"
+          class="hidden"
+        ></div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           STUDY AI
+           ================================================= -->
+
+      <section
+        id="page-study-ai"
+        class="app-page"
+      >
+
+        <div class="page-header">
+
+          <div>
+
+            <span class="eyebrow">
+              INTELLIGENCE ARTIFICIELLE
+            </span>
+
+            <h1>
+              Study AI ✨
+            </h1>
+
+            <p class="page-description">
+              Travaille sur tes cours avec l'aide de Lili.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="ai-action-cards">
+
+
+          <button
+            type="button"
+            class="ai-action-card"
+            data-ai-action="summary"
+          >
+
+            <span>
+              📚
+            </span>
+
+            <strong>
+              Résumer un cours
+            </strong>
+
+            <small>
+              Un résumé clair et structuré
+            </small>
+
+          </button>
+
+
+          <button
+            type="button"
+            class="ai-action-card"
+            data-ai-action="flashcards"
+          >
+
+            <span>
+              🧠
+            </span>
+
+            <strong>
+              Créer des flashcards
+            </strong>
+
+            <small>
+              Transforme ton cours en cartes
+            </small>
+
+          </button>
+
+
+          <button
+            type="button"
+            class="ai-action-card"
+            data-ai-action="quiz"
+          >
+
+            <span>
+              ❓
+            </span>
+
+            <strong>
+              Créer un quiz
+            </strong>
+
+            <small>
+              Teste ce que tu connais
+            </small>
+
+          </button>
+
+
+          <button
+            type="button"
+            class="ai-action-card"
+            data-ai-action="mindmap"
+          >
+
+            <span>
+              🗺️
+            </span>
+
+            <strong>
+              Carte mentale
+            </strong>
+
+            <small>
+              Organise les idées principales
+            </small>
+
+          </button>
+
+
+          <button
+            type="button"
+            class="ai-action-card"
+            data-ai-action="podcast"
+          >
+
+            <span>
+              🎧
+            </span>
+
+            <strong>
+              Podcast
+            </strong>
+
+            <small>
+              Révise avec un script audio
+            </small>
+
+          </button>
+
+
+          <button
+            type="button"
+            class="ai-action-card"
+            data-ai-action="test"
+          >
+
+            <span>
+              📝
+            </span>
+
+            <strong>
+              Préparer un test
+            </strong>
+
+            <small>
+              Entraîne-toi comme en contrôle
+            </small>
+
+          </button>
+
+        </div>
+
+
+        <div class="panel ai-chat-panel">
+
+          <div class="panel-header">
+
+            <div>
+
+              <span class="eyebrow">
+                STUDY AI
+              </span>
+
+              <h2>
+                Que veux-tu faire ?
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <form
+            id="study-ai-form"
+            class="ai-input-form"
+          >
+
+            <textarea
+              id="study-ai-input"
+              rows="3"
+              placeholder="Ex : explique-moi ce cours simplement..."
+            ></textarea>
+
+
+            <button
+              type="submit"
+              class="primary-button"
+            >
+              Envoyer ✨
+            </button>
+
+          </form>
+
+
+          <div
+            id="study-ai-results"
+            class="ai-results"
+          ></div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           LILI
+           ================================================= -->
+
+      <section
+        id="page-lili"
+        class="app-page"
+      >
+
+        <div class="page-header">
+
+          <div>
+
+            <span class="eyebrow">
+              TON ASSISTANTE
+            </span>
+
+            <h1>
+              Lili 🌸
+            </h1>
+
+            <p class="page-description">
+              Pose tes questions, demande des explications
+              ou demande de l'aide pour réviser.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="lili-layout">
+
+
+          <div class="lili-profile-card">
+
+            <div class="lili-avatar-large">
+              🌸
+            </div>
+
+            <h2>
+              Lili
+            </h2>
+
+            <p>
+              Ton assistante d'étude
+            </p>
+
+
+            <div class="lili-status">
+              <span></span>
+              Disponible
+            </div>
+
+          </div>
+
+
+          <div class="panel lili-chat-panel">
+
+            <div
+              id="lili-messages"
+              class="lili-messages"
+            >
+
+              <div class="lili-message lili-message-ai">
+
+                <div class="lili-message-avatar">
+                  🌸
+                </div>
+
+                <div class="lili-message-bubble">
+
+                  Bonjour 🌷
+
+                  <br />
+
+                  Je peux t'expliquer une notion,
+                  résumer un cours, créer des flashcards,
+                  préparer un quiz et bien plus.
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <div class="lili-suggestions">
+
+              <button
+                type="button"
+                data-lili-prompt="Explique-moi mon cours simplement."
+              >
+                📚 Explique mon cours
+              </button>
+
+              <button
+                type="button"
+                data-lili-prompt="Donne-moi les notions les plus importantes à retenir."
+              >
+                ✨ Les notions importantes
+              </button>
+
+              <button
+                type="button"
+                data-lili-prompt="Aide-moi à réviser efficacement."
+              >
+                🎯 Comment réviser ?
+              </button>
+
+            </div>
+
+
+            <form
+              id="lili-form"
+              class="lili-input-form"
+            >
+
+              <textarea
+                id="lili-input"
+                rows="2"
+                placeholder="Écris ton message à Lili..."
+              ></textarea>
+
+
+              <button
+                type="submit"
+                class="primary-button"
+              >
+                Envoyer
+              </button>
+
+            </form>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           FOCUS
+           ================================================= -->
+
+      <section
+        id="page-focus"
+        class="app-page"
+      >
+
+        <div class="page-header">
+
+          <div>
+
+            <span class="eyebrow">
+              CONCENTRATION
+            </span>
+
+            <h1>
+              Focus
+            </h1>
+
+            <p class="page-description">
+              Choisis une durée et concentre-toi sur une seule tâche.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="focus-layout">
+
+
+          <div class="focus-timer-card">
+
+
+            <div class="focus-timer-label">
+              TEMPS RESTANT
+            </div>
+
+
+            <div
+              id="focus-timer-display"
+              class="focus-timer-display"
+            >
+              25:00
+            </div>
+
+
+            <div
+              id="focus-status"
+              class="focus-status"
+            >
+              Prêt à commencer
+            </div>
+
+
+            <div class="focus-presets">
+
+
+              <button
+                type="button"
+                class="focus-preset"
+                data-focus-minutes="25"
+              >
+                25 min
+              </button>
+
+
+              <button
+                type="button"
+                class="focus-preset"
+                data-focus-minutes="45"
+              >
+                45 min
+              </button>
+
+
+              <button
+                type="button"
+                class="focus-preset"
+                data-focus-minutes="60"
+              >
+                60 min
+              </button>
+
+            </div>
+
+
+            <div class="focus-actions">
+
+
+              <button
+                type="button"
+                id="focus-start-button"
+                class="primary-button"
+              >
+                ▶ Commencer
+              </button>
+
+
+              <button
+                type="button"
+                id="focus-pause-button"
+                class="secondary-button"
+              >
+                ⏸ Pause
+              </button>
+
+
+              <button
+                type="button"
+                id="focus-stop-button"
+                class="secondary-button"
+              >
+                ■ Arrêter
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <div class="panel">
+
+            <div class="panel-header">
+
+              <div>
+
+                <span class="eyebrow">
+                  OPTIONS
+                </span>
+
+                <h2>
+                  Mode Focus
+                </h2>
+
+              </div>
+
+            </div>
+
+
+            <div class="focus-options">
+
+
+              <div class="focus-option">
+
+                <div>
+                  <strong>
+                    🔔 Notifications
+                  </strong>
+
+                  <p>
+                    Autoriser les notifications du navigateur.
+                  </p>
+                </div>
+
+
+                <button
+                  type="button"
+                  id="focus-notification-button"
+                  class="secondary-button"
+                >
+                  Autoriser
+                </button>
+
+              </div>
+
+
+              <div class="focus-option">
+
+                <div>
+                  <strong>
+                    ⛶ Plein écran
+                  </strong>
+
+                  <p>
+                    Agrandir ton espace de travail.
+                  </p>
+                </div>
+
+
+                <button
+                  type="button"
+                  id="focus-fullscreen-button"
+                  class="secondary-button"
+                >
+                  Activer
+                </button>
+
+              </div>
+
+
+              <div class="focus-option">
+
+                <div>
+                  <strong>
+                    🔋 Écran actif
+                  </strong>
+
+                  <p>
+                    Éviter la mise en veille lorsque possible.
+                  </p>
+                </div>
+
+
+                <button
+                  type="button"
+                  id="focus-wake-lock-button"
+                  class="secondary-button"
+                >
+                  Activer
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           STATISTIQUES
+           ================================================= -->
+
+      <section
+        id="page-stats"
+        class="app-page"
+      >
+
+        <div class="page-header">
+
+          <div>
+
+            <span class="eyebrow">
+              PROGRESSION
+            </span>
+
+            <h1>
+              Statistiques
+            </h1>
+
+            <p class="page-description">
+              Suis ton évolution et ta régularité.
+            </p>
+
+          </div>
+
+
+          <select
+            id="stats-period"
+            class="stats-period"
+          >
+
+            <option value="7">
+              7 jours
+            </option>
+
+            <option value="30">
+              30 jours
+            </option>
+
+            <option value="90">
+              3 mois
+            </option>
+
+            <option value="all">
+              Tout
+
+          </select>
+
+        </div>
+
+
+        <div
+          id="stats-content"
+          class="stats-content"
+        ></div>
+
+
+        <div class="stats-grid">
+
+
+          <div class="panel">
+
+            <div class="panel-header">
+
+              <div>
+
+                <span class="eyebrow">
+                  ACTIVITÉ
+                </span>
+
+                <h2>
+                  Ton activité
+                </h2>
+
+              </div>
+
+            </div>
+
+
+            <div
+              id="activity-chart"
+              class="activity-chart"
+            ></div>
+
+          </div>
+
+
+          <div class="panel">
+
+            <div class="panel-header">
+
+              <div>
+
+                <span class="eyebrow">
+                  MAÎTRISE
+                </span>
+
+                <h2>
+                  Matières
+                </h2>
+
+              </div>
+
+            </div>
+
+
+            <div
+              id="stats-mastery"
+              class="stats-mastery"
+            ></div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           RECOMPENSES
+           ================================================= -->
+
+      <section
+        id="page-rewards"
+        class="app-page"
+      >
+
+        <div class="page-header">
+
+          <div>
+
+            <span class="eyebrow">
+              RÉCOMPENSES
+            </span>
+
+            <h1>
+              Mon espace ✨
+            </h1>
+
+            <p class="page-description">
+              Débloque de petites décorations pendant tes révisions.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div
+          id="rewards-grid"
+          class="rewards-grid"
+        ></div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           AMIS
+           ================================================= -->
+
+      <section
+        id="page-friends"
+        class="app-page"
+      >
+
+        <div class="page-header">
+
+          <div>
+
+            <span class="eyebrow">
+              COMMUNAUTÉ
+            </span>
+
+            <h1>
+              Mes amis
+            </h1>
+
+            <p class="page-description">
+              Ajoute des amis et partage ta progression d'étude.
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            id="refresh-friends-button"
+            class="secondary-button"
+          >
+            ↻ Actualiser
+          </button>
+
+        </div>
+
+
+        <div class="friends-search-panel panel">
+
+          <div class="panel-header">
+
+            <div>
+
+              <h2>
+                Trouver un ami
+              </h2>
+
+              <p>
+                Recherche son nom d'affichage.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <form
+            id="friend-search-form"
+            class="friend-search-form"
+          >
+
+            <input
+              id="friend-search"
+              type="search"
+              placeholder="Nom ou surnom..."
+            />
+
+            <button
+              type="submit"
+              class="primary-button"
+            >
+              Rechercher
+            </button>
+
+          </form>
+
+
+          <div
+            id="friend-search-results"
+            class="friend-search-results"
+          ></div>
+
+        </div>
+
+
+        <div class="friends-grid">
+
+
+          <div class="panel">
+
+            <div class="panel-header">
+
+              <div>
+
+                <span class="eyebrow">
+                  MES AMIS
+                </span>
+
+                <h2>
+                  Amis
+                </h2>
+
+              </div>
+
+            </div>
+
+
+            <div
+              id="friends-list"
+              class="friends-list"
+            ></div>
+
+          </div>
+
+
+          <div class="panel">
+
+            <div class="panel-header">
+
+              <div>
+
+                <span class="eyebrow">
+                  DEMANDES
+                </span>
+
+                <h2>
+                  Demandes d'amis
+                </h2>
+
+              </div>
+
+            </div>
+
+
+            <div
+              id="friend-requests-list"
+              class="friend-requests-list"
+            ></div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =================================================
+           PROFIL / PARAMETRES
+           ================================================= -->
+
+      <section
+        id="page-profile"
+        class="app-page"
+      >
+
+        <div class="page-header">
+
+          <div>
+
+            <span class="eyebrow">
+              PERSONNALISATION
+            </span>
+
+            <h1>
+              Profil & paramètres
+            </h1>
+
+            <p class="page-description">
+              Gère ton profil, ta langue et tes données.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="profile-layout">
+
+
+          <!-- PROFIL -->
+
+          <div class="panel">
+
+            <div class="panel-header">
+
+              <div>
+
+                <span class="eyebrow">
+                  MON PROFIL
+                </span>
+
+                <h2>
+                  Informations personnelles
+                </h2>
+
+              </div>
+
+            </div>
+
+
+            <div class="profile-avatar-block">
+
+              <button
+                type="button"
+                id="profile-avatar-button"
+                class="profile-avatar-large"
+                data-user-avatar
+              >
+                🌸
+              </button>
+
+              <p>
+                Clique pour changer ton avatar.
+              </p>
+
+            </div>
+
+
+            <form
+              id="profile-form"
+              class="form-stack"
+            >
+
+
+              <div class="form-grid-two">
+
+
+                <label>
+
+                  <span>
+                    Prénom
+                  </span>
+
+                  <input
+                    id="profile-first-name"
+                    type="text"
+                  />
+
+                </label>
+
+
+                <label>
+
+                  <span>
+                    Nom
+                  </span>
+
+                  <input
+                    id="profile-last-name"
+                    type="text"
+                  />
+
+                </label>
+
+              </div>
+
+
+              <label>
+
+                <span>
+                  Nom d'affichage
+                </span>
+
+                <input
+                  id="profile-display-name"
+                  type="text"
+                />
+
+              </label>
+
+
+              <div class="form-grid-two">
+
+
+                <label>
+
+                  <span>
+                    Âge
+                  </span>
+
+                  <input
+                    id="profile-age"
+                    type="number"
+                  />
+
+                </label>
+
+
+                <label>
+
+                  <span>
+                    Date de naissance
+                  </span>
+
+                  <input
+                    id="profile-birth-date"
+                    type="date"
+                  />
+
+                </label>
+
+              </div>
+
+
+              <label>
+
+                <span>
+                  Classe / niveau
+                </span>
+
+                <select
+                  id="profile-class-level"
+                >
+
+                  <option value="">
+                    Choisir
+                  </option>
+
+                  <option value="6e">
+                    6e
+                  </option>
+
+                  <option value="5e">
+                    5e
+                  </option>
+
+                  <option value="4e">
+                    4e
+                  </option>
+
+                  <option value="3e">
+                    3e
+                  </option>
+
+                  <option value="2nde">
+                    2nde
+                  </option>
+
+                  <option value="1re">
+                    1re
+                  </option>
+
+                  <option value="Terminale">
+                    Terminale
+                  </option>
+
+                  <option value="Études supérieures">
+                    Études supérieures
+                  </option>
+
+                  <option value="Autre">
+                    Autre
+                  </option>
+
+                </select>
+
+              </label>
+
+
+              <label>
+
+                <span>
+                  E-mail
+                </span>
+
+                <input
+                  id="profile-email"
+                  type="email"
+                  autocomplete="email"
+                />
+
+              </label>
+
+
+              <button
+                type="submit"
+                class="primary-button"
+              >
+                Enregistrer le profil
+              </button>
+
+            </form>
+
+          </div>
+
+
+
+          <!-- PARAMETRES -->
+
+          <div class="profile-settings-column">
+
+
+            <!-- LANGUE -->
+
+            <div class="panel">
+
+              <div class="panel-header">
+
+                <div>
+
+                  <span class="eyebrow">
+                    LANGUE
+                  </span>
+
+                  <h2>
+                    Langue du site
+                  </h2>
+
+                  <p>
+                    Change toute l'interface de STUDY PLANNER.
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <label
+                class="settings-select-label"
+              >
+
+                <span>
+                  Choisir la langue
+                </span>
+
+
+                <select
+                  id="settings-language"
+                >
+
+                  <option value="fr">
+                    🇫🇷 Français
+                  </option>
+
+                  <option value="en">
+                    🇬🇧 English
+                  </option>
+
+                  <option value="zh">
+                    🇨🇳 中文
+                  </option>
+
+                  <option value="vi">
+                    🇻🇳 Tiếng Việt
+                  </option>
+
+                </select>
+
+              </label>
+
+            </div>
+
+
+
+            <!-- EMAIL -->
+
+            <div class="panel">
+
+              <div class="panel-header">
+
+                <div>
+
+                  <span class="eyebrow">
+                    COMPTE
+                  </span>
+
+                  <h2>
+                    Sécurité
+                  </h2>
+
+                </div>
+
+              </div>
+
+
+              <div class="settings-action">
+
+                <div>
+
+                  <strong>
+                    Modifier l'e-mail
+                  </strong>
+
+                  <p>
+                    Change l'adresse associée à ton compte.
+                  </p>
+
+                </div>
+
+                <button
+                  type="button"
+                  id="change-email-button"
+                  class="secondary-button"
+                >
+                  Modifier
+                </button>
+
+              </div>
+
+
+              <label>
+
+                <span>
+                  Nouveau mot de passe
+                </span>
+
+                <input
+                  id="profile-new-password"
+                  type="password"
+                  autocomplete="new-password"
+                  placeholder="Nouveau mot de passe"
+                />
+
+              </label>
+
+
+              <button
+                type="button"
+                id="change-password-button"
+                class="secondary-button"
+              >
+                Modifier le mot de passe
+              </button>
+
+            </div>
+
+
+
+            <!-- DONNEES -->
+
+            <div class="panel">
+
+              <div class="panel-header">
+
+                <div>
+
+                  <span class="eyebrow">
+                    DONNÉES
+                  </span>
+
+                  <h2>
+                    Mes données
+                  </h2>
+
+                  <p>
+                    Tu peux exporter ou supprimer tes données d'étude.
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <div class="settings-actions-stack">
+
+
+                <button
+                  type="button"
+                  id="export-data-button"
+                  class="secondary-button"
+                >
+                  ↓ Exporter mes données
+                </button>
+
+
+                <label
+                  class="secondary-button import-button"
+                  for="import-data-file"
+                >
+                  ↑ Importer mes données
+
+                  <input
+                    id="import-data-file"
+                    type="file"
+                    accept=".json"
+                    hidden
+                  />
+
+                </label>
+
+
+                <button
+                  type="button"
+                  id="reset-study-data-button"
+                  class="danger-button"
+                >
+                  Supprimer mes données d'étude
+                </button>
+
+              </div>
+
+            </div>
+
+
+
+            <!-- DECONNEXION -->
+
+            <div class="panel danger-panel">
+
+              <div>
+
+                <h2>
+                  Se déconnecter
+                </h2>
+
+                <p>
+                  Tu pourras te reconnecter quand tu veux.
+                </p>
+
+              </div>
+
+
+              <button
+                type="button"
+                id="logout-button"
+                class="secondary-button"
+              >
+                Se déconnecter
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+    </main>
+
+  </div>
+
+
+
+  <!-- =====================================================
+       MODALE GENERALE
+       ===================================================== -->
+
+  <div
+    id="modal-overlay"
+    class="modal-overlay hidden"
+  >
+
+    <div
+      id="modal-content"
+      class="modal-content"
+      role="dialog"
+      aria-modal="true"
+    ></div>
+
+  </div>
+
+
+
+  <!-- =====================================================
+       TOASTS
+       ===================================================== -->
+
+  <div
+    id="toast-container"
+    class="toast-container"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+
+
+  <!-- =====================================================
+       JAVASCRIPT DE L'APPLICATION
+       ===================================================== -->
+
+  <script src="app.js"></script>
+
+
+</body>
+
+</html>
