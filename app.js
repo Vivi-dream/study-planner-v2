@@ -556,6 +556,19 @@ function createAvatarButtons(containerId) {
   });
 }
 
+function openAvatarPicker(type) {
+  const container =
+    type === "profile"
+      ? document.querySelector("#profile-avatars")
+      : document.querySelector("#signup-avatars");
+
+  if (container) {
+    container.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }
+}
 function initializeAvatarPickers() {
   createAvatarButtons(
     "#signup-avatars"
