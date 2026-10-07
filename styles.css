@@ -2,3 +2,197 @@
 @media(max-width:1100px){.cards-grid{grid-template-columns:repeat(2,1fr)}.grid-2,.lili-layout,.calendar-layout,.profile-layout,.friends-layout{grid-template-columns:1fr}.hero-ai{grid-column:auto}.reward-grid{grid-template-columns:repeat(4,1fr)}}@media(max-width:800px){.sidebar{transform:translateX(-100%);transition:.2s}.sidebar.open{transform:translateX(0)}.main{margin-left:0;width:100%}.mobile-menu{display:block}.topbar{padding:0 14px}.content{padding:20px 13px}.page-head{align-items:flex-start;flex-direction:column}.metric-grid{grid-template-columns:repeat(2,1fr)}.cards-grid,.deck-grid{grid-template-columns:1fr}.filters{grid-template-columns:1fr 1fr}.reward-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:520px){.filters,.two{grid-template-columns:1fr}.auth-card{padding:25px}.topbar>div:first-of-type{display:none}.chat-form{flex-direction:column}.calendar-day{min-height:52px}.weekdays,.calendar-grid{gap:3px}.reward-grid{grid-template-columns:repeat(2,1fr)}}
 
 .color-dot{width:34px;height:34px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #eadfe5}.color-dot:focus{box-shadow:0 0 0 3px rgba(193,123,152,.2)}
+/* =========================================================
+   COURS — ACTIONS IA + FICHIERS
+   ========================================================= */
+
+.material-ai-actions {
+  margin: 24px 0;
+  padding: 24px;
+  border-radius: 26px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 244, 249, 0.95),
+      rgba(247, 242, 255, 0.95)
+    );
+
+  border: 1px solid rgba(210, 170, 195, 0.18);
+
+  box-shadow:
+    0 10px 35px rgba(80, 55, 75, 0.07);
+}
+
+
+.material-ai-actions-header {
+  margin-bottom: 18px;
+}
+
+
+.material-ai-actions-header h3 {
+  margin: 5px 0;
+}
+
+
+.material-ai-actions-header p {
+  margin: 0;
+  opacity: 0.62;
+}
+
+
+.material-ai-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+
+.material-ai-action {
+  width: 100%;
+  border: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 16px;
+
+  border-radius: 19px;
+
+  background: rgba(255, 255, 255, 0.85);
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+
+.material-ai-action:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 9px 25px rgba(80, 55, 75, 0.10);
+}
+
+
+.material-ai-action-icon {
+  width: 45px;
+  height: 45px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 14px;
+
+  background: #fff4f8;
+
+  font-size: 1.45rem;
+}
+
+
+.material-ai-action strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+
+.material-ai-action small {
+  display: block;
+  opacity: 0.55;
+}
+
+
+.lesson-generated-files {
+  margin-top: 24px;
+}
+
+
+.lesson-generated-files-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+
+/* Fichier enregistré */
+
+.lesson-generated-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+
+  padding: 15px 17px;
+
+  border-radius: 18px;
+
+  background: #ffffff;
+
+  border: 1px solid rgba(0,0,0,0.05);
+
+  cursor: pointer;
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+
+.lesson-generated-file:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 24px rgba(70, 45, 65, 0.08);
+}
+
+
+.lesson-generated-file-left {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+
+.lesson-generated-file-icon {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 13px;
+
+  background: #f8f1f7;
+
+  font-size: 1.25rem;
+}
+
+
+.lesson-generated-file-title {
+  font-weight: 700;
+}
+
+
+.lesson-generated-file-type {
+  margin-top: 2px;
+  font-size: 0.78rem;
+  opacity: 0.5;
+}
+
+
+@media (max-width: 700px) {
+
+  .material-ai-action-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
