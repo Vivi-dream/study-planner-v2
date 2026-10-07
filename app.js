@@ -3,8 +3,8 @@
    Part 1 — configuration + core helpers
    ========================================================= */
 
-const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
-const SUPABASE_PUBLISHABLE_KEY = "YOUR_SUPABASE_PUBLISHABLE_KEY";
+const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URLhttps://mobguanciniqnlyomdaw.supabase.co/rest/v1/";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_If-fVDIcUQVz1oD0OgoImQ_yWluJaoK";
 
 const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
