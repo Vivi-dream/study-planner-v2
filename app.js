@@ -746,7 +746,6 @@ async function registerAccount() {
 ----------------------------- */
 
 async function loginAccount(event) {
-  event.preventDefault();
 
   const email =
     $("#login-email")
