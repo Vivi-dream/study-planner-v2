@@ -20689,3 +20689,87 @@ showMainApp = async function() {
   );
 
 })();
+/* =========================================================
+   CORRECTION — BOUTON CREER UN COMPTE
+   ========================================================= */
+
+function correctionBoutonInscription() {
+
+  const boutonCreer =
+    document.getElementById("show-signup-button");
+
+  const boutonConnexion =
+    document.getElementById("show-login-button");
+
+  const loginView =
+    document.getElementById("login-view");
+
+  const signupView =
+    document.getElementById("signup-view");
+
+
+  if (
+    boutonCreer &&
+    loginView &&
+    signupView
+  ) {
+
+    boutonCreer.addEventListener(
+      "click",
+      function () {
+
+        loginView.classList.add("hidden");
+
+        signupView.classList.remove("hidden");
+
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+
+      }
+    );
+
+  }
+
+
+  if (
+    boutonConnexion &&
+    loginView &&
+    signupView
+  ) {
+
+    boutonConnexion.addEventListener(
+      "click",
+      function () {
+
+        signupView.classList.add("hidden");
+
+        loginView.classList.remove("hidden");
+
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+
+      }
+    );
+
+  }
+
+}
+
+
+if (document.readyState === "loading") {
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    correctionBoutonInscription,
+    { once: true }
+  );
+
+} else {
+
+  correctionBoutonInscription();
+
+}
