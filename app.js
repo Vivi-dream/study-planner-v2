@@ -17,7 +17,9 @@ const supabaseClient = window.supabase.createClient(
     }
   }
 );
-
+let sessionActuelle = null;
+let utilisateurActuel = null;
+let avatarSelectionne = null;
 /* -----------------------------
    Global configuration
 ----------------------------- */
