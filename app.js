@@ -17953,3 +17953,1458 @@ window.changerLangue =
 
 window.appliquerLangue =
   appliquerLangue;
+/* =========================================================
+   FLASHCARDS — SYSTEME COMPLET
+   Maîtrise + statistiques + refaire les difficiles
+   ========================================================= */
+
+
+/* =========================================================
+   1. ETAT DE LA SESSION
+   ========================================================= */
+
+let spFlashcardSession = {
+  cards: [],
+  originalCards: [],
+  index: 0,
+  flipped: false,
+  results: [],
+  materialId: null,
+  materialTitle: ""
+};
+
+
+/* =========================================================
+   2. NIVEAUX DE MAITRISE
+   ========================================================= */
+
+const SP_FLASHCARD_LEVELS = {
+  difficile: {
+    key: "difficile",
+    label: "Compliqué",
+    emoji: "🔴",
+    className: "mastery-red"
+  },
+
+  bof: {
+    key: "bof",
+    label: "Bof",
+    emoji: "🟠",
+    className: "mastery-orange"
+  },
+
+  ca_va: {
+    key: "ca_va",
+    label: "Ça va",
+    emoji: "🟡",
+    className: "mastery-yellow"
+  },
+
+  maitrise: {
+    key: "maitrise",
+    label: "Maîtrisé",
+    emoji: "🟢",
+    className: "mastery-green"
+  }
+};
+
+
+/* =========================================================
+   3. UTILITAIRES
+   ========================================================= */
+
+function spFlashcardSafeArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+
+function spFlashcardNormalizeCard(card) {
+  if (!card) {
+    return {
+      question: "",
+      answer: ""
+    };
+  }
+
+  return {
+    id:
+      card.id ||
+      card.card_id ||
+      crypto.randomUUID(),
+
+    question:
+      card.question ||
+      card.front ||
+      card.recto ||
+      "",
+
+    answer:
+      card.answer ||
+      card.back ||
+      card.verso ||
+      "",
+
+    source:
+      card.source ||
+      null
+  };
+}
+
+
+function spFlashcardNormalizeCards(cards) {
+  return spFlashcardSafeArray(cards)
+    .map(spFlashcardNormalizeCard)
+    .filter(card => card.question || card.answer);
+}
+
+
+/* =========================================================
+   4. DEMARRER UNE SESSION
+   ========================================================= */
+
+function spStartFlashcardSession(
+  cards,
+  options = {}
+) {
+
+  const normalized =
+    spFlashcardNormalizeCards(cards);
+
+  if (!normalized.length) {
+    toast(
+      "Aucune flashcard à réviser.",
+      "error"
+    );
+
+    return;
+  }
+
+  spFlashcardSession = {
+    cards: [...normalized],
+    originalCards: [...normalized],
+    index: 0,
+    flipped: false,
+    results: [],
+    materialId: options.materialId || null,
+    materialTitle: options.materialTitle || ""
+  };
+
+  spRenderFlashcardPlayer();
+}
+
+
+/* =========================================================
+   5. CARTE ACTUELLE
+   ========================================================= */
+
+function spCurrentFlashcard() {
+
+  return (
+    spFlashcardSession.cards[
+      spFlashcardSession.index
+    ] || null
+  );
+
+}
+
+
+/* =========================================================
+   6. AFFICHER LES FLASHCARDS
+   ========================================================= */
+
+function spRenderFlashcardPlayer() {
+
+  const card =
+    spCurrentFlashcard();
+
+  if (!card) {
+    spShowFlashcardResults();
+    return;
+  }
+
+  const total =
+    spFlashcardSession.cards.length;
+
+  const current =
+    spFlashcardSession.index + 1;
+
+  const percent =
+    Math.round((current / total) * 100);
+
+  const levelButtons =
+    spFlashcardSession.flipped
+      ? `
+        <div class="sp-flashcard-mastery">
+
+          <p class="sp-flashcard-mastery-title">
+            Comment tu maîtrises cette carte ?
+          </p>
+
+          <div class="sp-flashcard-mastery-buttons">
+
+            <button
+              type="button"
+              class="sp-mastery-button sp-mastery-red"
+              data-sp-flashcard-level="difficile"
+            >
+              <span>🔴</span>
+              <strong>Compliqué</strong>
+            </button>
+
+
+            <button
+              type="button"
+              class="sp-mastery-button sp-mastery-orange"
+              data-sp-flashcard-level="bof"
+            >
+              <span>🟠</span>
+              <strong>Bof</strong>
+            </button>
+
+
+            <button
+              type="button"
+              class="sp-mastery-button sp-mastery-yellow"
+              data-sp-flashcard-level="ca_va"
+            >
+              <span>🟡</span>
+              <strong>Ça va</strong>
+            </button>
+
+
+            <button
+              type="button"
+              class="sp-mastery-button sp-mastery-green"
+              data-sp-flashcard-level="maitrise"
+            >
+              <span>🟢</span>
+              <strong>Maîtrisé</strong>
+            </button>
+
+          </div>
+
+        </div>
+      `
+      : "";
+
+
+  openModal(`
+
+    <div class="sp-flashcard-player">
+
+      <div class="sp-flashcard-header">
+
+        <div>
+
+          <span class="sp-flashcard-kicker">
+            🧠 FLASHCARDS
+          </span>
+
+          <h2>
+            ${escapeHTML(
+              spFlashcardSession.materialTitle ||
+              "Session de flashcards"
+            )}
+          </h2>
+
+        </div>
+
+
+        <span class="sp-flashcard-counter">
+          ${current} / ${total}
+        </span>
+
+      </div>
+
+
+      <div class="sp-flashcard-progress">
+
+        <div
+          class="sp-flashcard-progress-fill"
+          style="width:${percent}%"
+        ></div>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="sp-flashcard-card
+          ${spFlashcardSession.flipped
+            ? "sp-flashcard-card-flipped"
+            : ""}"
+        id="sp-flashcard-main-card"
+      >
+
+        <span class="sp-flashcard-small-label">
+
+          ${
+            spFlashcardSession.flipped
+              ? "RÉPONSE"
+              : "QUESTION"
+          }
+
+        </span>
+
+
+        <div class="sp-flashcard-content">
+
+          ${
+            spFlashcardSession.flipped
+              ? escapeHTML(card.answer)
+              : escapeHTML(card.question)
+          }
+
+        </div>
+
+
+        <span class="sp-flashcard-click-hint">
+
+          ${
+            spFlashcardSession.flipped
+              ? "Clique pour revoir la question"
+              : "Clique pour voir la réponse"
+          }
+
+        </span>
+
+      </button>
+
+
+      ${
+        spFlashcardSession.flipped
+          ? levelButtons
+          : `
+            <button
+              type="button"
+              class="primary-button full-width"
+              id="sp-flashcard-show-answer"
+            >
+              Voir la réponse
+            </button>
+          `
+      }
+
+
+      <div class="sp-flashcard-navigation">
+
+        <button
+          type="button"
+          class="secondary-button"
+          id="sp-flashcard-skip-button"
+        >
+          Passer
+        </button>
+
+
+        <button
+          type="button"
+          class="text-button"
+          id="sp-flashcard-stop-button"
+        >
+          Quitter la session
+        </button>
+
+      </div>
+
+    </div>
+
+  `);
+
+
+  /* ---------- Cliquer sur la carte ---------- */
+
+  document
+    .getElementById("sp-flashcard-main-card")
+    ?.addEventListener(
+      "click",
+      spToggleFlashcard
+    );
+
+
+  /* ---------- Bouton réponse ---------- */
+
+  document
+    .getElementById("sp-flashcard-show-answer")
+    ?.addEventListener(
+      "click",
+      spToggleFlashcard
+    );
+
+
+  /* ---------- Niveau de maîtrise ---------- */
+
+  document
+    .querySelectorAll(
+      "[data-sp-flashcard-level]"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const level =
+            button.dataset.spFlashcardLevel;
+
+          spRateCurrentFlashcard(level);
+
+        }
+      );
+
+    });
+
+
+  /* ---------- Passer ---------- */
+
+  document
+    .getElementById(
+      "sp-flashcard-skip-button"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+
+        spRateCurrentFlashcard(
+          "bof",
+          true
+        );
+
+      }
+    );
+
+
+  /* ---------- Quitter ---------- */
+
+  document
+    .getElementById(
+      "sp-flashcard-stop-button"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+
+        const quitter =
+          confirm(
+            "Quitter cette session de flashcards ?"
+          );
+
+        if (quitter) {
+          closeModal();
+        }
+
+      }
+    );
+
+}
+
+
+/* =========================================================
+   7. RETOURNER LA CARTE
+   ========================================================= */
+
+function spToggleFlashcard() {
+
+  spFlashcardSession.flipped =
+    !spFlashcardSession.flipped;
+
+  spRenderFlashcardPlayer();
+
+}
+
+
+/* =========================================================
+   8. ENREGISTRER LE NIVEAU
+   ========================================================= */
+
+function spRateCurrentFlashcard(
+  level,
+  skipped = false
+) {
+
+  const card =
+    spCurrentFlashcard();
+
+  if (!card) return;
+
+
+  const existingIndex =
+    spFlashcardSession.results.findIndex(
+      result =>
+        result.card.id === card.id
+    );
+
+
+  const result = {
+    card: { ...card },
+    level,
+    skipped
+  };
+
+
+  if (existingIndex === -1) {
+
+    spFlashcardSession.results.push(result);
+
+  } else {
+
+    spFlashcardSession.results[
+      existingIndex
+    ] = result;
+
+  }
+
+
+  /* Carte suivante */
+
+  spFlashcardSession.index += 1;
+
+  spFlashcardSession.flipped = false;
+
+  spRenderFlashcardPlayer();
+
+}
+
+
+/* =========================================================
+   9. CALCUL DES STATISTIQUES
+   ========================================================= */
+
+function spGetFlashcardStats() {
+
+  const results =
+    spFlashcardSession.results;
+
+  const total =
+    spFlashcardSession.originalCards.length;
+
+
+  let difficile = 0;
+  let bof = 0;
+  let caVa = 0;
+  let maitrise = 0;
+
+
+  results.forEach(result => {
+
+    switch (result.level) {
+
+      case "difficile":
+        difficile++;
+        break;
+
+      case "bof":
+        bof++;
+        break;
+
+      case "ca_va":
+        caVa++;
+        break;
+
+      case "maitrise":
+        maitrise++;
+        break;
+
+    }
+
+  });
+
+
+  const repondu =
+    difficile +
+    bof +
+    caVa +
+    maitrise;
+
+
+  const taux =
+    total > 0
+      ? Math.round(
+          (maitrise / total) * 100
+        )
+      : 0;
+
+
+  return {
+    total,
+    repondu,
+    difficile,
+    bof,
+    caVa,
+    maitrise,
+    taux
+  };
+
+}
+
+
+/* =========================================================
+   10. CARTES COMPLIQUEES
+   ========================================================= */
+
+function spGetDifficultFlashcards() {
+
+  return spFlashcardSession.results
+    .filter(result =>
+      result.level === "difficile"
+    )
+    .map(result => ({
+      ...result.card
+    }));
+
+}
+
+
+/* =========================================================
+   11. CARTES A REVOIR
+   🔴 + 🟠
+   ========================================================= */
+
+function spGetCardsToReview() {
+
+  return spFlashcardSession.results
+    .filter(result =>
+      result.level === "difficile" ||
+      result.level === "bof"
+    )
+    .map(result => ({
+      ...result.card
+    }));
+
+}
+
+
+/* =========================================================
+   12. TOUTES LES CARTES
+   ========================================================= */
+
+function spGetAllFlashcards() {
+
+  return spFlashcardSession.originalCards
+    .map(card => ({
+      ...card
+    }));
+
+}
+
+
+/* =========================================================
+   13. ECRAN DES RESULTATS
+   ========================================================= */
+
+function spShowFlashcardResults() {
+
+  const stats =
+    spGetFlashcardStats();
+
+
+  const difficiles =
+    spGetDifficultFlashcards();
+
+  const aRevoir =
+    spGetCardsToReview();
+
+  const toutes =
+    spGetAllFlashcards();
+
+
+  const maitrisePourcentage =
+    stats.total > 0
+      ? Math.round(
+          (stats.maitrise / stats.total) * 100
+        )
+      : 0;
+
+
+  openModal(`
+
+    <div class="sp-flashcard-results">
+
+      <div class="sp-results-emoji">
+        ${
+          stats.maitrise === stats.total
+            ? "🏆"
+            : stats.difficile > 0
+              ? "🌸"
+              : "🎉"
+        }
+      </div>
+
+
+      <span class="sp-flashcard-kicker">
+        SESSION TERMINÉE
+      </span>
+
+
+      <h2>
+        ${
+          stats.maitrise === stats.total
+            ? "Tout est maîtrisé !"
+            : "Bravo, tu as terminé !"
+        }
+      </h2>
+
+
+      <div class="sp-results-main-score">
+
+        <strong>
+          ${stats.maitrise}
+        </strong>
+
+        <span>
+          / ${stats.total}
+        </span>
+
+      </div>
+
+
+      <p class="sp-results-score-label">
+        cartes maîtrisées
+      </p>
+
+
+      <div class="sp-results-progress">
+
+        <div
+          class="sp-results-progress-fill"
+          style="width:${maitrisePourcentage}%"
+        ></div>
+
+      </div>
+
+
+      <div class="sp-results-grid">
+
+        <div class="sp-result-card red">
+
+          <span>🔴</span>
+
+          <strong>
+            ${stats.difficile}
+          </strong>
+
+          <small>
+            Compliquées
+          </small>
+
+        </div>
+
+
+        <div class="sp-result-card orange">
+
+          <span>🟠</span>
+
+          <strong>
+            ${stats.bof}
+          </strong>
+
+          <small>
+            Bof
+          </small>
+
+        </div>
+
+
+        <div class="sp-result-card yellow">
+
+          <span>🟡</span>
+
+          <strong>
+            ${stats.caVa}
+          </strong>
+
+          <small>
+            Ça va
+          </small>
+
+        </div>
+
+
+        <div class="sp-result-card green">
+
+          <span>🟢</span>
+
+          <strong>
+            ${stats.maitrise}
+          </strong>
+
+          <small>
+            Maîtrisées
+          </small>
+
+        </div>
+
+      </div>
+
+
+      <div class="sp-results-actions">
+
+        ${
+          difficiles.length > 0
+            ? `
+              <button
+                type="button"
+                class="primary-button full-width"
+                id="sp-redo-difficult"
+              >
+                🔴 Refaire les ${difficiles.length}
+                compliquées
+              </button>
+            `
+            : ""
+        }
+
+
+        ${
+          aRevoir.length > 0
+            ? `
+              <button
+                type="button"
+                class="secondary-button full-width"
+                id="sp-redo-review"
+              >
+                🟠 Refaire les ${aRevoir.length}
+                cartes à revoir
+              </button>
+            `
+            : ""
+        }
+
+
+        <button
+          type="button"
+          class="secondary-button full-width"
+          id="sp-redo-all"
+        >
+          🔄 Tout refaire
+        </button>
+
+
+        <button
+          type="button"
+          class="text-button"
+          id="sp-finish-session"
+        >
+          Terminer
+        </button>
+
+      </div>
+
+    </div>
+
+  `);
+
+
+  /* ---------- Refaire compliquées ---------- */
+
+  document
+    .getElementById(
+      "sp-redo-difficult"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+
+        closeModal();
+
+        spStartFlashcardSession(
+          difficiles,
+          {
+            materialId:
+              spFlashcardSession.materialId,
+
+            materialTitle:
+              spFlashcardSession.materialTitle
+          }
+        );
+
+      }
+    );
+
+
+  /* ---------- Refaire à revoir ---------- */
+
+  document
+    .getElementById(
+      "sp-redo-review"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+
+        closeModal();
+
+        spStartFlashcardSession(
+          aRevoir,
+          {
+            materialId:
+              spFlashcardSession.materialId,
+
+            materialTitle:
+              spFlashcardSession.materialTitle
+          }
+        );
+
+      }
+    );
+
+
+  /* ---------- Tout refaire ---------- */
+
+  document
+    .getElementById(
+      "sp-redo-all"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+
+        closeModal();
+
+        spStartFlashcardSession(
+          toutes,
+          {
+            materialId:
+              spFlashcardSession.materialId,
+
+            materialTitle:
+              spFlashcardSession.materialTitle
+          }
+        );
+
+      }
+    );
+
+
+  /* ---------- Terminer ---------- */
+
+  document
+    .getElementById(
+      "sp-finish-session"
+    )
+    ?.addEventListener(
+      "click",
+      () => {
+
+        closeModal();
+
+      }
+    );
+
+}
+
+
+/* =========================================================
+   14. OUVRIR UN FICHIER FLASHCARDS ENREGISTRE
+   ========================================================= */
+
+function ouvrirFichierFlashcards(material) {
+
+  if (!material) {
+
+    toast(
+      "Flashcards introuvables.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  let cards = [];
+
+
+  try {
+
+    /*
+     * Le contenu peut être :
+     * - directement un tableau JSON
+     * - ou une chaîne contenant le JSON
+     */
+
+    if (Array.isArray(material.contenu)) {
+
+      cards =
+        material.contenu;
+
+    } else {
+
+      cards =
+        JSON.parse(
+          material.contenu || "[]"
+        );
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Erreur lecture flashcards :",
+      error
+    );
+
+    toast(
+      "Impossible de lire ces flashcards.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  cards =
+    spFlashcardNormalizeCards(cards);
+
+
+  if (!cards.length) {
+
+    toast(
+      "Ce fichier ne contient aucune flashcard.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  spStartFlashcardSession(
+    cards,
+    {
+      materialId: material.id,
+      materialTitle:
+        material.titre || "Flashcards"
+    }
+  );
+
+}
+
+
+/* =========================================================
+   15. OUVRIR DEPUIS UN DECK
+   ========================================================= */
+
+function lancerSessionFlashcardsPersonnalisee(
+  cards,
+  options = {}
+) {
+
+  spStartFlashcardSession(
+    cards,
+    options
+  );
+
+}
+
+
+/* =========================================================
+   16. ALIAS POUR LES ANCIENNES FONCTIONS
+   ========================================================= */
+
+window.ouvrirFichierFlashcards =
+  ouvrirFichierFlashcards;
+
+window.lancerSessionFlashcardsPersonnalisee =
+  lancerSessionFlashcardsPersonnalisee;
+
+window.spStartFlashcardSession =
+  spStartFlashcardSession;
+
+window.spGetFlashcardStats =
+  spGetFlashcardStats;
+
+
+/* =========================================================
+   17. CSS DES FLASHCARDS
+   ========================================================= */
+
+(function injectFlashcardStyles() {
+
+  if (
+    document.getElementById(
+      "sp-flashcard-styles"
+    )
+  ) {
+    return;
+  }
+
+
+  const style =
+    document.createElement("style");
+
+  style.id =
+    "sp-flashcard-styles";
+
+
+  style.textContent = `
+
+    /* ================================
+       PLAYER
+       ================================= */
+
+    .sp-flashcard-player {
+      width: min(760px, 100%);
+      margin: 0 auto;
+    }
+
+
+    .sp-flashcard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 15px;
+    }
+
+
+    .sp-flashcard-header h2 {
+      margin: 5px 0 0;
+    }
+
+
+    .sp-flashcard-kicker {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      opacity: 0.55;
+    }
+
+
+    .sp-flashcard-counter {
+      padding: 8px 13px;
+      border-radius: 999px;
+      background: #f5edf5;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+
+    .sp-flashcard-progress {
+      width: 100%;
+      height: 8px;
+      border-radius: 99px;
+      overflow: hidden;
+      background: #eee9ee;
+      margin-bottom: 22px;
+    }
+
+
+    .sp-flashcard-progress-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: #d78fb0;
+      transition: width 0.25s ease;
+    }
+
+
+    /* ================================
+       CARTE
+       ================================= */
+
+    .sp-flashcard-card {
+      width: 100%;
+      min-height: 330px;
+      border: 0;
+      border-radius: 28px;
+      padding: 45px 35px;
+      margin-bottom: 18px;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      text-align: center;
+
+      background:
+        linear-gradient(
+          135deg,
+          #fff8fb,
+          #f8f3ff
+        );
+
+      box-shadow:
+        0 18px 50px rgba(82, 50, 75, 0.08);
+
+      cursor: pointer;
+      transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+    }
+
+
+    .sp-flashcard-card:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 22px 55px rgba(82, 50, 75, 0.12);
+    }
+
+
+    .sp-flashcard-small-label {
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      opacity: 0.45;
+      margin-bottom: 25px;
+    }
+
+
+    .sp-flashcard-content {
+      font-size: clamp(1.3rem, 3vw, 2rem);
+      line-height: 1.45;
+      font-weight: 700;
+      max-width: 620px;
+    }
+
+
+    .sp-flashcard-click-hint {
+      margin-top: 28px;
+      font-size: 0.82rem;
+      opacity: 0.48;
+    }
+
+
+    /* ================================
+       MAITRISE
+       ================================= */
+
+    .sp-flashcard-mastery {
+      padding: 4px 0 18px;
+    }
+
+
+    .sp-flashcard-mastery-title {
+      text-align: center;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+
+    .sp-flashcard-mastery-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+
+    .sp-mastery-button {
+      border: 0;
+      border-radius: 16px;
+      padding: 13px 8px;
+      cursor: pointer;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+
+      transition:
+        transform 0.15s ease;
+    }
+
+
+    .sp-mastery-button:hover {
+      transform: translateY(-2px);
+    }
+
+
+    .sp-mastery-button span {
+      font-size: 1.25rem;
+    }
+
+
+    .sp-mastery-button strong {
+      font-size: 0.8rem;
+    }
+
+
+    .sp-mastery-red {
+      background: #ffe4e4;
+      color: #b83333;
+    }
+
+
+    .sp-mastery-orange {
+      background: #ffecd9;
+      color: #c76718;
+    }
+
+
+    .sp-mastery-yellow {
+      background: #fff6c9;
+      color: #967400;
+    }
+
+
+    .sp-mastery-green {
+      background: #e1f5e6;
+      color: #318149;
+    }
+
+
+    .sp-flashcard-navigation {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 15px;
+      gap: 15px;
+    }
+
+
+    /* ================================
+       RESULTATS
+       ================================= */
+
+    .sp-flashcard-results {
+      width: min(640px, 100%);
+      margin: 0 auto;
+      text-align: center;
+    }
+
+
+    .sp-results-emoji {
+      font-size: 3.2rem;
+      margin-bottom: 8px;
+    }
+
+
+    .sp-flashcard-results h2 {
+      margin: 5px 0 18px;
+    }
+
+
+    .sp-results-main-score {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 7px;
+    }
+
+
+    .sp-results-main-score strong {
+      font-size: 4rem;
+      line-height: 1;
+    }
+
+
+    .sp-results-main-score span {
+      font-size: 1.45rem;
+      opacity: 0.45;
+    }
+
+
+    .sp-results-score-label {
+      opacity: 0.65;
+      margin: 8px 0 18px;
+    }
+
+
+    .sp-results-progress {
+      height: 10px;
+      width: 100%;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #eee9ee;
+      margin-bottom: 22px;
+    }
+
+
+    .sp-results-progress-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: #57a86d;
+    }
+
+
+    .sp-results-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+
+    .sp-result-card {
+      border-radius: 18px;
+      padding: 16px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+
+    .sp-result-card span {
+      font-size: 1.25rem;
+    }
+
+
+    .sp-result-card strong {
+      font-size: 1.35rem;
+    }
+
+
+    .sp-result-card small {
+      font-size: 0.73rem;
+    }
+
+
+    .sp-result-card.red {
+      background: #ffe4e4;
+    }
+
+
+    .sp-result-card.orange {
+      background: #ffecd9;
+    }
+
+
+    .sp-result-card.yellow {
+      background: #fff6c9;
+    }
+
+
+    .sp-result-card.green {
+      background: #e1f5e6;
+    }
+
+
+    .sp-results-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+
+    @media (max-width: 650px) {
+
+      .sp-flashcard-mastery-buttons {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+
+      .sp-results-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+
+      .sp-flashcard-card {
+        min-height: 280px;
+        padding: 30px 20px;
+      }
+
+
+      .sp-flashcard-header {
+        flex-direction: column;
+      }
+
+    }
+
+  `;
+
+
+  document.head.appendChild(style);
+
+})();
