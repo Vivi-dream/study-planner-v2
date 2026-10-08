@@ -16618,7 +16618,30 @@ function afficherUtilisateursAdmin() {
     .join("");
 }
 
+async function gererActionPremium(userId, donnerPremium) {
+  try {
+    const fonction = donnerPremium
+      ? "admin_give_premium"
+      : "admin_remove_premium";
 
+    const { error } = await supabaseClient.rpc(fonction, {
+      target_user_id: userId
+    });
+
+    if (error) {
+      console.error("Erreur action Premium :", error);
+      alert(error.message || "Impossible de modifier le Premium.");
+      return;
+    }
+
+    await chargerUtilisateursAdmin();
+    await chargerStatistiquesAdmin();
+
+  } catch (error) {
+    console.error("Erreur Premium :", error);
+    alert("Une erreur est survenue.");
+  }
+}
 function echapperHTML(value) {
   return String(value)
     .replace(/&/g, "&amp;")
