@@ -4301,3 +4301,265 @@ body.sp-theme-neutral {
   }
 
 }
+/* =========================================================
+   STUDY GARDEN
+   ========================================================= */
+
+.garden-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.garden-card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(220, 180, 205, 0.35);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(160, 110, 140, 0.08);
+}
+
+.garden-topbar,
+.garden-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.garden-topbar h2,
+.garden-section-header h2,
+.garden-progress h2 {
+  margin: 0;
+}
+
+.garden-topbar p,
+.garden-section-header p {
+  margin: 6px 0 0;
+  color: #8d7b86;
+}
+
+.garden-coins {
+  background: #fff2f8;
+  color: #b85d88;
+  padding: 10px 15px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+/* Jardin */
+
+.garden-scene {
+  position: relative;
+  height: 390px;
+  margin-top: 20px;
+  overflow: hidden;
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      to bottom,
+      #e9ddff 0%,
+      #f8e9f3 48%,
+      #dcefcf 49%,
+      #c8e5b7 100%
+    );
+}
+
+.garden-sky {
+  position: absolute;
+  top: 35px;
+  right: 70px;
+  font-size: 48px;
+  opacity: 0.8;
+}
+
+.garden-tree {
+  position: absolute;
+  left: 55px;
+  bottom: 105px;
+  font-size: 100px;
+}
+
+.garden-house {
+  position: absolute;
+  right: 80px;
+  bottom: 85px;
+  font-size: 100px;
+}
+
+.garden-flower {
+  position: absolute;
+  bottom: 55px;
+  font-size: 34px;
+}
+
+.flower-1 {
+  left: 25%;
+}
+
+.flower-2 {
+  left: 42%;
+}
+
+.flower-3 {
+  left: 62%;
+}
+
+.flower-4 {
+  left: 78%;
+}
+
+.garden-path {
+  position: absolute;
+  left: 48%;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  font-size: 30px;
+}
+
+/* Progression */
+
+.garden-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.garden-stat {
+  padding: 15px;
+  border-radius: 16px;
+  background: #fff7fb;
+}
+
+.garden-stat div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.garden-stat strong {
+  font-size: 20px;
+  color: #b85d88;
+}
+
+.garden-next {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  margin-top: auto;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fff1f7, #f2ecff);
+}
+
+.garden-next-icon {
+  font-size: 32px;
+}
+
+.garden-next strong {
+  font-size: 14px;
+}
+
+.garden-next p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #8d7b86;
+}
+
+/* Décorations */
+
+.garden-shop {
+  margin-top: 24px;
+}
+
+.garden-badge {
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #f7efff;
+  color: #8567a5;
+  font-size: 13px;
+}
+
+.garden-items {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.garden-item {
+  border: 1px solid #eadce5;
+  background: #fffafd;
+  border-radius: 18px;
+  padding: 18px 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.garden-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(160, 110, 140, 0.12);
+}
+
+.garden-item span {
+  display: block;
+  font-size: 38px;
+  margin-bottom: 8px;
+}
+
+.garden-item strong,
+.garden-item small {
+  display: block;
+}
+
+.garden-item strong {
+  color: #66545f;
+}
+
+.garden-item small {
+  margin-top: 5px;
+  color: #a08e99;
+  font-size: 11px;
+}
+
+.garden-item.locked {
+  opacity: 0.75;
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+  .garden-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .garden-items {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .garden-scene {
+    height: 300px;
+  }
+
+  .garden-tree {
+    left: 20px;
+    font-size: 70px;
+  }
+
+  .garden-house {
+    right: 20px;
+    font-size: 70px;
+  }
+
+  .garden-topbar,
+  .garden-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
