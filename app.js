@@ -20870,3 +20870,4 @@ function initialiserGarden() {
     garden.appendChild(tile);
   }
 }
+initialiserGarden();
