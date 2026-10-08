@@ -3311,7 +3311,47 @@
     </div>
 
   </div>
+<!-- ============================================
+     GESTION DES UTILISATEURS
+     ============================================ -->
 
+<div class="admin-section">
+
+  <div class="admin-section-header">
+    <div>
+      <span class="eyebrow">UTILISATEURS</span>
+      <h2>Gestion des comptes</h2>
+      <p>Gère les accès et les récompenses des utilisateurs.</p>
+    </div>
+
+    <button
+      type="button"
+      class="secondary-button"
+      id="admin-refresh-users"
+    >
+      Actualiser
+    </button>
+  </div>
+
+  <div class="admin-user-search">
+    <input
+      type="search"
+      id="admin-user-search"
+      placeholder="Rechercher un nom, pseudo ou email..."
+      autocomplete="off"
+    >
+  </div>
+
+  <div
+    id="admin-users-list"
+    class="admin-users-list"
+  >
+    <div class="admin-loading">
+      Chargement des utilisateurs…
+    </div>
+  </div>
+
+</div>
 </section>
 
         <div class="page-header">
