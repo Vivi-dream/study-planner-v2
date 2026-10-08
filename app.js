@@ -16223,7 +16223,166 @@ async function rafraichirInterfaceComplete() {
     console.error("Erreur pendant le rendu initial :", error);
   }
 }
+// ============================================================
+// ADMIN — DÉTECTION + STATISTIQUES
+// ============================================================
 
+async function verifierEtAfficherAdmin() {
+  const boutonAdmin = document.getElementById("admin-nav-button");
+
+  if (!boutonAdmin) return;
+
+  try {
+    const { data, error } = await supabaseClient.rpc("est_admin");
+
+    if (error) {
+      console.error("Erreur vérification Admin :", error);
+      boutonAdmin.style.display = "none";
+      return;
+    }
+
+    const estAdmin = data === true;
+
+    boutonAdmin.style.display = estAdmin ? "" : "none";
+
+    if (estAdmin) {
+      await chargerStatistiquesAdmin();
+    }
+
+  } catch (error) {
+    console.error("Erreur Admin :", error);
+    boutonAdmin.style.display = "none";
+  }
+}
+
+
+async function chargerStatistiquesAdmin() {
+  try {
+    const { data, error } = await supabaseClient.rpc(
+      "admin_get_stats"
+    );
+
+    if (error) {
+      console.error("Erreur statistiques Admin :", error);
+      return;
+    }
+
+    if (!data) return;
+
+    mettreAJourStatAdmin(
+      "admin-stat-users",
+      data.users_total
+    );
+
+    mettreAJourStatAdmin(
+      "admin-stat-premium",
+      data.premium_users
+    );
+
+    mettreAJourStatAdmin(
+      "admin-stat-free",
+      data.free_users
+    );
+
+    mettreAJourStatAdmin(
+      "admin-stat-active",
+      data.users_active_today
+    );
+
+    mettreAJourStatAdmin(
+      "admin-stat-subjects",
+      data.subjects_total
+    );
+
+    mettreAJourStatAdmin(
+      "admin-stat-flashcards",
+      data.flashcards_total
+    );
+
+    mettreAJourStatAdmin(
+      "admin-stat-quizzes",
+      data.quiz_attempts_total
+    );
+
+    mettreAJourStatAdmin(
+      "admin-stat-focus",
+      data.focus_minutes_total
+    );
+
+    mettreAJourStatAdmin(
+      "admin-stat-chapters",
+      data.chapters_total
+    );
+
+    mettreAJourStatAdmin(
+      "admin-stat-materials",
+      data.materials_total
+    );
+
+    mettreAJourStatAdmin(
+      "admin-stat-revisions",
+      data.revisions_total
+    );
+
+    mettreAJourStatAdmin(
+      "admin-stat-xp",
+      data.xp_total
+    );
+
+    mettreAJourStatAdmin(
+      "admin-stat-garden",
+      data.garden_placed_blocks_total
+    );
+
+    mettreAJourStatAdmin(
+      "admin-stat-tasks",
+      data.tasks_completed
+    );
+
+  } catch (error) {
+    console.error(
+      "Erreur chargement statistiques Admin :",
+      error
+    );
+  }
+}
+
+
+function mettreAJourStatAdmin(id, valeur) {
+  const element = document.getElementById(id);
+
+  if (!element) return;
+
+  if (valeur === null || valeur === undefined) {
+    element.textContent = "0";
+    return;
+  }
+
+  element.textContent = Number(valeur).toLocaleString("fr-FR");
+}
+
+
+// ============================================================
+// BOUTON ACTUALISER
+// ============================================================
+
+function brancherAdmin() {
+  const bouton = document.getElementById(
+    "admin-refresh-stats"
+  );
+
+  if (!bouton) return;
+
+  bouton.addEventListener("click", async () => {
+    bouton.disabled = true;
+    bouton.textContent = "Actualisation…";
+
+    await chargerStatistiquesAdmin();
+
+    bouton.disabled = false;
+    bouton.textContent = "Actualiser";
+  });
+}
 /* ---------- Sécurité interface ---------- */
 
 function verifierConnexionAvantAction(callback) {
