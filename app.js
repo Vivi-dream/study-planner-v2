@@ -16647,21 +16647,50 @@ function mettreAJourStatAdmin(id, valeur) {
 // ============================================================
 
 function brancherAdmin() {
-  const bouton = document.getElementById(
-    "admin-refresh-stats"
-  );
+  // Actualiser les statistiques
+  const boutonStats = document.getElementById("admin-refresh-stats");
 
-  if (!bouton) return;
+  if (boutonStats && !boutonStats.dataset.bound) {
+    boutonStats.dataset.bound = "true";
 
-  bouton.addEventListener("click", async () => {
-    bouton.disabled = true;
-    bouton.textContent = "Actualisation…";
+    boutonStats.addEventListener("click", async () => {
+      boutonStats.disabled = true;
+      boutonStats.textContent = "Actualisation…";
 
-    await chargerStatistiquesAdmin();
+      await chargerStatistiquesAdmin();
 
-    bouton.disabled = false;
-    bouton.textContent = "Actualiser";
-  });
+      boutonStats.disabled = false;
+      boutonStats.textContent = "Actualiser";
+    });
+  }
+
+  // Actualiser les utilisateurs
+  const boutonUsers = document.getElementById("admin-refresh-users");
+
+  if (boutonUsers && !boutonUsers.dataset.bound) {
+    boutonUsers.dataset.bound = "true";
+
+    boutonUsers.addEventListener("click", async () => {
+      boutonUsers.disabled = true;
+      boutonUsers.textContent = "Actualisation…";
+
+      await chargerUtilisateursAdmin();
+
+      boutonUsers.disabled = false;
+      boutonUsers.textContent = "Actualiser";
+    });
+  }
+
+  // Recherche utilisateur
+  const recherche = document.getElementById("admin-user-search");
+
+  if (recherche && !recherche.dataset.bound) {
+    recherche.dataset.bound = "true";
+
+    recherche.addEventListener("input", () => {
+      afficherUtilisateursAdmin();
+    });
+  }
 }
 /* ---------- Sécurité interface ---------- */
 
