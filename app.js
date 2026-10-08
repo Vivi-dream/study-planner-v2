@@ -16701,6 +16701,36 @@ async function ajouterCreditsAdmin(userId) {
 
   await chargerUtilisateursAdmin();
 }
+async function donnerRecompenseAdmin(userId) {
+  const nom = prompt(
+    "Nom de la récompense à donner à cet utilisateur :"
+  );
+
+  if (nom === null) return;
+
+  const recompense = nom.trim();
+
+  if (!recompense) {
+    alert("Entre un nom de récompense.");
+    return;
+  }
+
+  const { error } = await supabaseClient.rpc(
+    "admin_give_reward",
+    {
+      target_user_id: userId,
+      reward_name: recompense
+    }
+  );
+
+  if (error) {
+    console.error("Erreur récompense :", error);
+    alert(error.message || "Impossible de donner la récompense.");
+    return;
+  }
+
+  alert("Récompense donnée avec succès.");
+}
 function echapperHTML(value) {
   return String(value)
     .replace(/&/g, "&amp;")
