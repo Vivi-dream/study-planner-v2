@@ -16252,9 +16252,10 @@ async function verifierEtAfficherAdmin() {
 
     boutonAdmin.style.display = estAdmin ? "" : "none";
 
-    if (estAdmin) {
-      await chargerStatistiquesAdmin();
-    }
+   if (estAdmin) {
+  await chargerStatistiquesAdmin();
+  await chargerUtilisateursAdmin();
+}
 
   } catch (error) {
     console.error("Erreur Admin :", error);
