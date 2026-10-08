@@ -20845,3 +20845,28 @@ if (document.readyState === "loading") {
   correctionBoutonInscription();
 
 }
+/* =========================================================
+   STUDY GARDEN — GENERATION DES TUILES
+   ========================================================= */
+
+function initialiserGarden() {
+
+  const garden = document.getElementById("garden-ground");
+
+  if (!garden) return;
+
+  garden.innerHTML = "";
+
+  const nombreDeTuiles = 100;
+
+  for (let i = 1; i <= nombreDeTuiles; i++) {
+
+    const tile = document.createElement("div");
+
+    tile.className = "garden-tile";
+
+    tile.dataset.tile = i;
+
+    garden.appendChild(tile);
+  }
+}
