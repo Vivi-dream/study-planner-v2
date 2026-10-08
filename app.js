@@ -16754,13 +16754,15 @@ function brancherAdmin() {
   // Recherche utilisateur
   const recherche = document.getElementById("admin-user-search");
 
-  if (recherche && !recherche.dataset.bound) {
+    if (recherche && !recherche.dataset.bound) {
     recherche.dataset.bound = "true";
 
     recherche.addEventListener("input", () => {
       afficherUtilisateursAdmin();
     });
   }
+
+  brancherActionsUtilisateursAdmin();
 }
 /* ---------- Sécurité interface ---------- */
 
