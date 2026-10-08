@@ -16650,7 +16650,54 @@ function echapperHTML(value) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+function brancherActionsUtilisateursAdmin() {
+  const liste = document.getElementById("admin-users-list");
 
+  if (!liste || liste.dataset.actionsBound === "true") return;
+
+  liste.dataset.actionsBound = "true";
+
+  liste.addEventListener("click", async (event) => {
+    const bouton = event.target.closest(
+      "[data-admin-action]"
+    );
+
+    if (!bouton) return;
+
+    const action = bouton.dataset.adminAction;
+    const userId = bouton.dataset.userId;
+
+    if (!userId) return;
+
+    if (action === "give-premium") {
+      const confirmer = confirm(
+        "Donner Premium à cet utilisateur ?"
+      );
+
+      if (!confirmer) return;
+
+      bouton.disabled = true;
+
+      await gererActionPremium(userId, true);
+
+      bouton.disabled = false;
+    }
+
+    if (action === "remove-premium") {
+      const confirmer = confirm(
+        "Retirer Premium à cet utilisateur ?"
+      );
+
+      if (!confirmer) return;
+
+      bouton.disabled = true;
+
+      await gererActionPremium(userId, false);
+
+      bouton.disabled = false;
+    }
+  });
+}
 function mettreAJourStatAdmin(id, valeur) {
   const element = document.getElementById(id);
 
