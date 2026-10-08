@@ -16218,6 +16218,13 @@ async function rafraichirInterfaceComplete() {
 
     if (typeof renderProfile === "function") {
       await renderProfile();
+       if (typeof verifierEtAfficherAdmin === "function") {
+  await verifierEtAfficherAdmin();
+}
+
+if (typeof brancherAdmin === "function") {
+  brancherAdmin();
+}
     }
   } catch (error) {
     console.error("Erreur pendant le rendu initial :", error);
