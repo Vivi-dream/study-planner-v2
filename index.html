@@ -2880,221 +2880,153 @@
      GARDEN
      ================================================= -->
 
-<section
-  id="page-garden"
-  class="app-page"
->
+<section id="page-garden" class="app-page">
 
   <div class="page-header">
 
     <div>
+      <span class="eyebrow">STUDY GARDEN</span>
 
-      <span class="eyebrow">
-        🌸 STUDY GARDEN
-      </span>
-
-      <h1>
-        Mon jardin
-      </h1>
+      <h1>Mon jardin</h1>
 
       <p class="page-description">
-        Fais grandir ton jardin grâce à tes progrès.
+        Construis ton espace d'étude petit à petit.
       </p>
-
     </div>
 
-    <div class="garden-coins">
-      🌸 <strong>0</strong> fleurs
-    </div>
+    <div class="garden-toolbar">
 
-  </div>
+      <button
+        type="button"
+        class="secondary-button"
+        id="garden-zoom-out"
+      >
+        −
+      </button>
 
+      <span id="garden-zoom-value">
+        100%
+      </span>
 
-  <!-- JARDIN -->
-
-  <div class="garden-main panel">
-
-    <div class="garden-title">
-
-      <div>
-        <h2>
-          🌷 Mon petit jardin
-        </h2>
-
-        <p>
-          Étudie, révise et gagne des décorations pour ton jardin.
-        </p>
-      </div>
-
-    </div>
-
-
-    <div class="garden-scene">
-
-      <div class="garden-cloud cloud-one">
-        ☁️
-      </div>
-
-      <div class="garden-cloud cloud-two">
-        ☁️
-      </div>
-
-      <div class="garden-tree">
-        🌳
-      </div>
-
-      <div class="garden-house">
-        🏡
-      </div>
-
-      <div class="garden-flower flower-one">
-        🌷
-      </div>
-
-      <div class="garden-flower flower-two">
-        🌸
-      </div>
-
-      <div class="garden-flower flower-three">
-        🌼
-      </div>
-
-      <div class="garden-flower flower-four">
-        🌷
-      </div>
-
-      <div class="garden-flower flower-five">
-        🌻
-      </div>
-
-      <div class="garden-path">
-        🌱　🌱　🌱　🌱
-      </div>
+      <button
+        type="button"
+        class="secondary-button"
+        id="garden-zoom-in"
+      >
+        +
+      </button>
 
     </div>
 
   </div>
 
 
-  <!-- PROGRESSION -->
+  <!-- MONDE 3D -->
 
-  <div class="garden-grid">
+  <div class="garden-3d-card">
 
-    <div class="panel garden-stat-card">
+    <div class="garden-3d-world">
 
-      <span class="garden-stat-icon">
-        📚
-      </span>
+      <div class="garden-ground">
 
-      <div>
-        <strong>0</strong>
-        <p>Cours étudiés</p>
+        <!-- Tuiles vides -->
+        <div class="garden-tile" data-tile="1"></div>
+        <div class="garden-tile" data-tile="2"></div>
+        <div class="garden-tile" data-tile="3"></div>
+        <div class="garden-tile" data-tile="4"></div>
+        <div class="garden-tile" data-tile="5"></div>
+
+        <div class="garden-tile" data-tile="6"></div>
+        <div class="garden-tile" data-tile="7"></div>
+        <div class="garden-tile" data-tile="8"></div>
+        <div class="garden-tile" data-tile="9"></div>
+        <div class="garden-tile" data-tile="10"></div>
+
+        <div class="garden-tile" data-tile="11"></div>
+        <div class="garden-tile" data-tile="12"></div>
+        <div class="garden-tile" data-tile="13"></div>
+        <div class="garden-tile" data-tile="14"></div>
+        <div class="garden-tile" data-tile="15"></div>
+
+        <div class="garden-tile" data-tile="16"></div>
+        <div class="garden-tile" data-tile="17"></div>
+        <div class="garden-tile" data-tile="18"></div>
+        <div class="garden-tile" data-tile="19"></div>
+        <div class="garden-tile" data-tile="20"></div>
+
+        <div class="garden-tile" data-tile="21"></div>
+        <div class="garden-tile" data-tile="22"></div>
+        <div class="garden-tile" data-tile="23"></div>
+        <div class="garden-tile" data-tile="24"></div>
+        <div class="garden-tile" data-tile="25"></div>
+
       </div>
 
     </div>
 
-
-    <div class="panel garden-stat-card">
-
-      <span class="garden-stat-icon">
-        🧠
-      </span>
-
-      <div>
-        <strong>0</strong>
-        <p>Quiz terminés</p>
-      </div>
-
-    </div>
-
-
-    <div class="panel garden-stat-card">
-
-      <span class="garden-stat-icon">
-        🔥
-      </span>
-
-      <div>
-        <strong>0</strong>
-        <p>Jours consécutifs</p>
-      </div>
-
+    <div class="garden-empty-message">
+      <strong>Ton jardin commence ici</strong>
+      <span>Les éléments que tu débloqueras pourront être placés sur les tuiles.</span>
     </div>
 
   </div>
 
 
-  <!-- DÉCORATIONS -->
+  <!-- INFORMATIONS -->
 
-  <div class="panel garden-decorations">
+  <div class="garden-bottom">
 
-    <div class="panel-header">
+    <div class="panel garden-info-card">
 
-      <div>
+      <span class="garden-info-label">
+        NIVEAU DU JARDIN
+      </span>
 
-        <h2>
-          ✨ Décorations
-        </h2>
+      <strong>
+        Niveau 1
+      </strong>
 
-        <p>
-          Débloque de nouveaux éléments en progressant.
-        </p>
-
+      <div class="garden-progress-bar">
+        <div class="garden-progress-fill"></div>
       </div>
+
+      <small>
+        0 / 100 XP
+      </small>
 
     </div>
 
 
-    <div class="garden-items">
+    <div class="panel garden-info-card">
 
-      <button
-        type="button"
-        class="garden-item"
-      >
-        <span>🌷</span>
-        <strong>Tulipe</strong>
-        <small>🔒 5 quiz</small>
-      </button>
+      <span class="garden-info-label">
+        TUILES DISPONIBLES
+      </span>
 
+      <strong>
+        25
+      </strong>
 
-      <button
-        type="button"
-        class="garden-item"
-      >
-        <span>🌳</span>
-        <strong>Grand arbre</strong>
-        <small>🔒 10 quiz</small>
-      </button>
+      <small>
+        emplacements prêts à être personnalisés
+      </small>
+
+    </div>
 
 
-      <button
-        type="button"
-        class="garden-item"
-      >
-        <span>🦋</span>
-        <strong>Papillon</strong>
-        <small>🔒 15 quiz</small>
-      </button>
+    <div class="panel garden-info-card">
 
+      <span class="garden-info-label">
+        DÉCORATIONS
+      </span>
 
-      <button
-        type="button"
-        class="garden-item"
-      >
-        <span>🏡</span>
-        <strong>Petite maison</strong>
-        <small>🔒 Niveau 5</small>
-      </button>
+      <strong>
+        0
+      </strong>
 
-
-      <button
-        type="button"
-        class="garden-item"
-      >
-        <span>⛲</span>
-        <strong>Fontaine</strong>
-        <small>🔒 Niveau 10</small>
-      </button>
+      <small>
+        décorations débloquées
+      </small>
 
     </div>
 
