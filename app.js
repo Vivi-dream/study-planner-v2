@@ -15611,34 +15611,93 @@ function valeurCheckbox(id) {
 
 function brancherNavigation() {
   document.querySelectorAll("[data-page]").forEach((button) => {
-    button.addEventListener("click", async (event) => {
+    button.addEventListener("click", (event) => {
       event.preventDefault();
 
       const page = button.dataset.page;
 
       if (!page) return;
 
-      await navigate(page);
+      // Masquer toutes les pages
+      document.querySelectorAll(".app-page").forEach((pageElement) => {
+        pageElement.classList.remove("active");
+      });
 
+      // Afficher la page demandée
+      const targetPage = document.getElementById(`page-${page}`);
+
+      if (!targetPage) {
+        console.error(`Page introuvable : page-${page}`);
+        return;
+      }
+
+      targetPage.classList.add("active");
+
+      // Mettre à jour le bouton actif
+      document.querySelectorAll(".nav-button").forEach((navButton) => {
+        navButton.classList.remove("active");
+      });
+
+      document
+        .querySelectorAll(`[data-page="${page}"]`)
+        .forEach((navButton) => {
+          navButton.classList.add("active");
+        });
+
+      // Mémoriser la page actuelle
+      pageActuelle = page;
+
+      // Fermer le menu mobile
       const mobileMenu = document.getElementById("mobile-menu");
 
       if (mobileMenu) {
         mobileMenu.classList.remove("open");
       }
+
+      // Mettre à jour le breadcrumb si la fonction existe
+      if (typeof mettreAJourBreadcrumb === "function") {
+        mettreAJourBreadcrumb(page);
+      }
     });
   });
 
-  const mobileToggle = document.getElementById("mobile-menu-button");
+  const mobileToggle =
+    document.getElementById("mobile-menu-button");
 
   if (mobileToggle) {
     mobileToggle.addEventListener("click", () => {
-      const mobileMenu = document.getElementById("mobile-menu");
+      const mobileMenu =
+        document.getElementById("mobile-menu");
 
       if (!mobileMenu) return;
 
       mobileMenu.classList.toggle("open");
     });
   }
+}
+function montrerPage(page) {
+  document.querySelectorAll(".app-page").forEach((pageElement) => {
+    pageElement.classList.remove("active");
+  });
+
+  const targetPage = document.getElementById(`page-${page}`);
+
+  if (!targetPage) {
+    console.error(`Page introuvable : page-${page}`);
+    return;
+  }
+
+  targetPage.classList.add("active");
+
+  document.querySelectorAll(".nav-button").forEach((button) => {
+    button.classList.remove("active");
+  });
+
+  document
+    .querySelectorAll(`[data-page="${page}"]`)
+    .forEach((button) => {
+      button.classList.add("active");
+    });
 }
 
 /* ---------- Authentification ---------- */
