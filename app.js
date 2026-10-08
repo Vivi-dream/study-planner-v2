@@ -16790,6 +16790,13 @@ if (action === "add-credits") {
   await ajouterCreditsAdmin(userId);
 
   bouton.disabled = false;
+   if (action === "reward") {
+  bouton.disabled = true;
+
+  await donnerRecompenseAdmin(userId);
+
+  bouton.disabled = false;
+}
 }
 
       if (!confirmer) return;
