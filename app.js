@@ -16353,7 +16353,279 @@ async function chargerStatistiquesAdmin() {
     );
   }
 }
+// ============================================================
+// ADMIN — GESTION DES UTILISATEURS
+// ============================================================
 
+let utilisateursAdmin = [];
+
+
+async function chargerUtilisateursAdmin() {
+  const liste = document.getElementById("admin-users-list");
+
+  if (!liste) return;
+
+  liste.innerHTML = `
+    <div class="admin-loading">
+      Chargement des utilisateurs…
+    </div>
+  `;
+
+  try {
+    const { data, error } = await supabaseClient.rpc(
+      "admin_get_users"
+    );
+
+    if (error) {
+      console.error(
+        "Erreur chargement utilisateurs Admin :",
+        error
+      );
+
+      liste.innerHTML = `
+        <div class="admin-error">
+          Impossible de charger les utilisateurs.
+        </div>
+      `;
+
+      return;
+    }
+
+    utilisateursAdmin = data || [];
+
+    afficherUtilisateursAdmin();
+
+  } catch (error) {
+    console.error(
+      "Erreur utilisateurs Admin :",
+      error
+    );
+
+    liste.innerHTML = `
+      <div class="admin-error">
+        Une erreur est survenue.
+      </div>
+    `;
+  }
+}
+
+
+function afficherUtilisateursAdmin() {
+  const liste = document.getElementById(
+    "admin-users-list"
+  );
+
+  const recherche = (
+    document.getElementById(
+      "admin-user-search"
+    )?.value || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (!liste) return;
+
+  const utilisateursFiltres =
+    utilisateursAdmin.filter((user) => {
+
+      const texte = [
+        user.email,
+        user.first_name,
+        user.last_name,
+        user.display_name
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return texte.includes(recherche);
+    });
+
+
+  if (utilisateursFiltres.length === 0) {
+    liste.innerHTML = `
+      <div class="admin-empty">
+        Aucun utilisateur trouvé.
+      </div>
+    `;
+
+    return;
+  }
+
+
+  liste.innerHTML = utilisateursFiltres
+    .map((user) => {
+
+      const nom =
+        user.display_name ||
+        `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+        "Utilisateur";
+
+      const planPremium =
+        user.plan === "premium";
+
+      const avatar =
+        user.avatar || "🌸";
+
+      const xp =
+        Number(user.xp || 0).toLocaleString("fr-FR");
+
+      const credits =
+        planPremium
+          ? "∞"
+          : Number(
+              user.ai_credits || 0
+            ).toLocaleString("fr-FR");
+
+      const dateInscription =
+        user.created_at
+          ? new Date(
+              user.created_at
+            ).toLocaleDateString(
+              "fr-FR"
+            )
+          : "—";
+
+
+      return `
+        <article
+          class="admin-user-card"
+          data-user-id="${user.user_id}"
+        >
+
+          <div class="admin-user-main">
+
+            <div class="admin-user-avatar">
+              ${avatar}
+            </div>
+
+            <div class="admin-user-info">
+
+              <strong>
+                ${echapperHTML(nom)}
+              </strong>
+
+              <span>
+                ${echapperHTML(user.email || "Email inconnu")}
+              </span>
+
+              <small>
+                Inscrit le ${dateInscription}
+              </small>
+
+            </div>
+
+          </div>
+
+
+          <div class="admin-user-stats">
+
+            <div>
+              <span>Plan</span>
+              <strong class="${
+                planPremium
+                  ? "admin-plan-premium"
+                  : "admin-plan-free"
+              }">
+                ${
+                  planPremium
+                    ? "PREMIUM"
+                    : "FREE"
+                }
+              </strong>
+            </div>
+
+            <div>
+              <span>XP</span>
+              <strong>${xp}</strong>
+            </div>
+
+            <div>
+              <span>Streak</span>
+              <strong>
+                ${Number(user.best_streak || 0)}
+              </strong>
+            </div>
+
+            <div>
+              <span>Crédits IA</span>
+              <strong>${credits}</strong>
+            </div>
+
+          </div>
+
+
+          <div class="admin-user-actions">
+
+            ${
+              planPremium
+                ? `
+                  <button
+                    type="button"
+                    class="admin-action-button danger"
+                    data-admin-action="remove-premium"
+                    data-user-id="${user.user_id}"
+                  >
+                    Retirer Premium
+                  </button>
+                `
+                : `
+                  <button
+                    type="button"
+                    class="admin-action-button premium"
+                    data-admin-action="give-premium"
+                    data-user-id="${user.user_id}"
+                  >
+                    Donner Premium
+                  </button>
+                `
+            }
+
+            <button
+              type="button"
+              class="admin-action-button"
+              data-admin-action="add-xp"
+              data-user-id="${user.user_id}"
+            >
+              + XP
+            </button>
+
+            <button
+              type="button"
+              class="admin-action-button"
+              data-admin-action="add-credits"
+              data-user-id="${user.user_id}"
+            >
+              + crédits
+            </button>
+
+            <button
+              type="button"
+              class="admin-action-button"
+              data-admin-action="reward"
+              data-user-id="${user.user_id}"
+            >
+              Récompense
+            </button>
+
+          </div>
+
+        </article>
+      `;
+
+    })
+    .join("");
+}
+
+
+function echapperHTML(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 function mettreAJourStatAdmin(id, valeur) {
   const element = document.getElementById(id);
