@@ -16642,6 +16642,65 @@ async function gererActionPremium(userId, donnerPremium) {
     alert("Une erreur est survenue.");
   }
 }
+async function ajouterXPAdmin(userId) {
+  const valeur = prompt("Combien d'XP donner à cet utilisateur ?");
+
+  if (valeur === null) return;
+
+  const montant = Number(valeur);
+
+  if (!Number.isInteger(montant) || montant <= 0) {
+    alert("Entre un nombre entier positif.");
+    return;
+  }
+
+  const { error } = await supabaseClient.rpc(
+    "admin_add_xp",
+    {
+      target_user_id: userId,
+      amount: montant
+    }
+  );
+
+  if (error) {
+    console.error("Erreur ajout XP :", error);
+    alert(error.message || "Impossible d'ajouter l'XP.");
+    return;
+  }
+
+  await chargerUtilisateursAdmin();
+  await chargerStatistiquesAdmin();
+}
+
+
+async function ajouterCreditsAdmin(userId) {
+  const valeur = prompt("Combien de crédits IA donner à cet utilisateur ?");
+
+  if (valeur === null) return;
+
+  const montant = Number(valeur);
+
+  if (!Number.isInteger(montant) || montant <= 0) {
+    alert("Entre un nombre entier positif.");
+    return;
+  }
+
+  const { error } = await supabaseClient.rpc(
+    "admin_add_ai_credits",
+    {
+      target_user_id: userId,
+      amount: montant
+    }
+  );
+
+  if (error) {
+    console.error("Erreur ajout crédits :", error);
+    alert(error.message || "Impossible d'ajouter les crédits.");
+    return;
+  }
+
+  await chargerUtilisateursAdmin();
+}
 function echapperHTML(value) {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -16687,6 +16746,21 @@ function brancherActionsUtilisateursAdmin() {
       const confirmer = confirm(
         "Retirer Premium à cet utilisateur ?"
       );
+       if (action === "add-xp") {
+  bouton.disabled = true;
+
+  await ajouterXPAdmin(userId);
+
+  bouton.disabled = false;
+}
+
+if (action === "add-credits") {
+  bouton.disabled = true;
+
+  await ajouterCreditsAdmin(userId);
+
+  bouton.disabled = false;
+}
 
       if (!confirmer) return;
 
