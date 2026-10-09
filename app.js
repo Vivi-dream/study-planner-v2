@@ -16164,6 +16164,7 @@ function brancherAmis() {
   });
 }
 
+
 /* ---------- Rendu initial ---------- */
 
 async function rafraichirInterfaceComplete() {
@@ -16218,16 +16219,22 @@ async function rafraichirInterfaceComplete() {
 
     if (typeof renderProfile === "function") {
       await renderProfile();
-       if (typeof verifierEtAfficherAdmin === "function") {
-  await verifierEtAfficherAdmin();
-}
-
-if (typeof brancherAdmin === "function") {
-  brancherAdmin();
-}
     }
+
+    // Administration
+    if (typeof verifierEtAfficherAdmin === "function") {
+      await verifierEtAfficherAdmin();
+    }
+
+    if (typeof brancherAdmin === "function") {
+      brancherAdmin();
+    }
+
   } catch (error) {
-    console.error("Erreur pendant le rendu initial :", error);
+    console.error(
+      "Erreur pendant le rendu initial :",
+      error
+    );
   }
 }
 // ============================================================
