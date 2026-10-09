@@ -18388,67 +18388,55 @@ function traduire(cle) {
 }
 
 
+
 function appliquerLangue() {
-
   document.documentElement.lang =
-    langueActuelle === "zh"
-      ? "zh-CN"
-      : langueActuelle;
+    langueActuelle === "zh" ? "zh-CN" : langueActuelle;
 
-  document.querySelectorAll("[data-i18n]").forEach(
-    (element) => {
+  // Textes simples : conserve les éléments HTML internes.
+  document.querySelectorAll("[data-i18n]").forEach((element) => {
+    const cle = element.dataset.i18n;
+    if (!cle) return;
 
-      const cle = element.dataset.i18n;
+    const traduction = traduire(cle);
 
-      if (!cle) return;
-
-      const traduction = traduire(cle);
-
-      /*
-       * Pour les boutons et textes simples.
-       */
+    // Si un élément contient des icônes ou d'autres éléments,
+    // ne remplace pas toute sa structure HTML.
+    const cible = element.querySelector("[data-i18n-text]");
+    if (cible) {
+      cible.textContent = traduction;
+    } else if (element.children.length === 0) {
       element.textContent = traduction;
     }
-  );
+  });
 
+  // Placeholders des champs
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
+    element.placeholder = traduire(element.dataset.i18nPlaceholder);
+  });
 
-  document
-    .querySelectorAll("[data-i18n-placeholder]")
-    .forEach((element) => {
+  // Libellés de navigation
+  document.querySelectorAll("[data-page-label]").forEach((element) => {
+    element.textContent = traduire(element.dataset.pageLabel);
+  });
 
-      const cle =
-        element.dataset.i18nPlaceholder;
+  // Titres et infobulles
+  document.querySelectorAll("[data-i18n-title]").forEach((element) => {
+    element.title = traduire(element.dataset.i18nTitle);
+  });
 
-      if (!cle) return;
+  // Accessibilité
+  document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+    element.setAttribute(
+      "aria-label",
+      traduire(element.dataset.i18nAriaLabel)
+    );
+  });
 
-      element.placeholder =
-        traduire(cle);
-    });
-
-
-  document
-    .querySelectorAll("[data-page-label]")
-    .forEach((element) => {
-
-      const cle =
-        element.dataset.pageLabel;
-
-      if (!cle) return;
-
-      element.textContent =
-        traduire(cle);
-    });
-
-
-  /*
-   * Rafraîchit le texte des fichiers sans perdre
-   * les données enregistrées.
-   */
   if (typeof renderTopUser === "function") {
     renderTopUser();
   }
 }
-
 
 async function changerLangue(langue) {
 
