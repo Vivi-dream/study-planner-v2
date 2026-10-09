@@ -18236,6 +18236,8 @@ const TRADUCTIONS = {
     friends: "Amis",
     profile: "Profil",
     settings: "Paramètres",
+     siteLanguage: "Langue du site",
+languageDescription: "Change toute l'interface de STUDY PLANNER.",
 
     detailedSummary: "Résumé détaillé",
     examSummary: "Résumé examen",
@@ -18274,6 +18276,8 @@ const TRADUCTIONS = {
     friends: "Friends",
     profile: "Profile",
     settings: "Settings",
+     siteLanguage: "Website language",
+languageDescription: "Change the entire STUDY PLANNER interface.",
 
     detailedSummary: "Detailed summary",
     examSummary: "Exam summary",
@@ -18312,6 +18316,8 @@ const TRADUCTIONS = {
     friends: "朋友",
     profile: "个人资料",
     settings: "设置",
+     siteLanguage: "网站语言",
+languageDescription: "更改 STUDY PLANNER 的整个界面。",
 
     detailedSummary: "详细总结",
     examSummary: "考试总结",
@@ -18350,6 +18356,8 @@ const TRADUCTIONS = {
     friends: "Bạn bè",
     profile: "Hồ sơ",
     settings: "Cài đặt",
+     siteLanguage: "Ngôn ngữ trang web",
+languageDescription: "Thay đổi toàn bộ giao diện STUDY PLANNER.",
 
     detailedSummary: "Tóm tắt chi tiết",
     examSummary: "Tóm tắt ôn thi",
