@@ -16249,6 +16249,7 @@ async function verifierEtAfficherAdmin() {
   try {
 
 const { data, error } = await supabaseClient.rpc("est_admin");
+     console.log("ADMIN DEBUG :", { data, error });
 
 console.log("ADMIN DEBUG :", {
   data,
