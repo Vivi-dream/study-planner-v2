@@ -16980,7 +16980,7 @@ async function initialiserApplication() {
         }
       }
     });
-
+let pageActuelle = "dashboard";
     /* Affichage initial */
     if (typeof montrerPage === "function") {
       montrerPage(pageActuelle);
