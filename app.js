@@ -16247,8 +16247,14 @@ async function verifierEtAfficherAdmin() {
   if (!boutonAdmin) return;
 
   try {
-    const { data, error } = await supabaseClient.rpc("est_admin");
 
+const { data, error } = await supabaseClient.rpc("est_admin");
+
+console.log("ADMIN DEBUG :", {
+  data,
+  error,
+  userId: utilisateurActuel?.id
+});
     if (error) {
       console.error("Erreur vérification Admin :", error);
       boutonAdmin.style.display = "none";
