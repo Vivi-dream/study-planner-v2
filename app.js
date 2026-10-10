@@ -1341,6 +1341,9 @@ async function initializeAuthentication() {
       await loadAllData();
 
       renderAll();
+       setTimeout(() => {
+  verifierEtAfficherAdmin();
+}, 0);
 
     } else {
 
@@ -1383,6 +1386,9 @@ async function initializeAuthentication() {
           await loadAllData();
 
           renderAll();
+           setTimeout(() => {
+  verifierEtAfficherAdmin();
+}, 0);
 
         } catch (error) {
 
