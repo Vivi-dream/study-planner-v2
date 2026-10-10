@@ -16257,7 +16257,7 @@ async function verifierEtAfficherAdmin() {
 
     const estAdmin = data === true;
 
-    boutonAdmin.style.display = estAdmin ? "" : "none";
+   boutonAdmin.style.display = estAdmin ? "flex" : "none";
 
    if (estAdmin) {
   await chargerStatistiquesAdmin();
