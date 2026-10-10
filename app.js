@@ -16963,7 +16963,8 @@ async function initialiserApplication() {
     /* Raccourci clavier Focus */
     document.addEventListener("keydown", (event) => {
       if (
-        event.key.toLowerCase() === "f" &&
+       typeof event.key === "string" &&
+event.key.toLowerCase() === "f" &&
         !event.ctrlKey &&
         !event.metaKey &&
         !event.altKey &&
