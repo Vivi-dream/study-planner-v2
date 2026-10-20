@@ -3168,7 +3168,7 @@
 
 
 
-    <!-- =================================================
+<!-- =================================================
      PROFIL / PARAMETRES
      ================================================= -->
 
@@ -3176,8 +3176,130 @@
   id="page-profile"
   class="app-page"
 >
-  <!-- Le contenu de la page Profil / Paramètres
-       doit se trouver ici. -->
+  <div class="page-header">
+    <div>
+      <span class="eyebrow">PERSONNALISATION</span>
+      <h1>Profil & paramètres</h1>
+      <p class="page-description">
+        Gère ton profil, ta langue et tes données.
+      </p>
+    </div>
+  </div>
+
+  <div class="profile-layout">
+
+    <!-- PROFIL -->
+
+    <div class="panel">
+
+      <div class="panel-header">
+        <div>
+          <span class="eyebrow">MON PROFIL</span>
+          <h2>Informations personnelles</h2>
+        </div>
+      </div>
+
+      <div class="profile-avatar-block">
+        <button
+          type="button"
+          id="profile-avatar-button"
+          class="profile-avatar-large"
+          data-user-avatar
+        >
+          🌸
+        </button>
+
+        <p>Clique pour changer ton avatar.</p>
+      </div>
+
+      <form
+        id="profile-form"
+        class="form-stack"
+      >
+
+        <div class="form-grid-two">
+          <label>
+            <span>Prénom</span>
+            <input
+              id="profile-first-name"
+              type="text"
+            />
+          </label>
+
+          <label>
+            <span>Nom</span>
+            <input
+              id="profile-last-name"
+              type="text"
+            />
+          </label>
+        </div>
+
+        <label>
+          <span>Nom d'affichage</span>
+          <input
+            id="profile-display-name"
+            type="text"
+          />
+        </label>
+
+        <div class="form-grid-two">
+          <label>
+            <span>Âge</span>
+            <input
+              id="profile-age"
+              type="number"
+            />
+          </label>
+
+          <label>
+            <span>Date de naissance</span>
+            <input
+              id="profile-birth-date"
+              type="date"
+            />
+          </label>
+        </div>
+
+        <label>
+          <span>Classe / niveau</span>
+          <select id="profile-class-level">
+            <option value="">Choisir</option>
+            <option value="6e">6e</option>
+            <option value="5e">5e</option>
+            <option value="4e">4e</option>
+            <option value="3e">3e</option>
+            <option value="2nde">2nde</option>
+            <option value="1re">1re</option>
+            <option value="Terminale">Terminale</option>
+            <option value="Études supérieures">Études supérieures</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </label>
+
+        <label>
+          <span>E-mail</span>
+          <input
+            id="profile-email"
+            type="email"
+            autocomplete="email"
+          />
+        </label>
+
+        <button
+          type="submit"
+          class="primary-button"
+        >
+          Enregistrer le profil
+        </button>
+
+      </form>
+
+    </div>
+
+    <!-- CONSERVE ICI LA SUITE EXISTANTE DE PROFILE-LAYOUT -->
+
+  </div>
 </section>
 
 <!-- =================================================
@@ -3185,212 +3307,13 @@
      ================================================= -->
 
 <section
-  class="app-page"
   id="page-admin"
+  class="app-page"
   style="display: none;"
 >
-
-  <div class="page-header">
-    <div>
-      <span class="eyebrow">ADMINISTRATION</span>
-      <h1>Centre de contrôle</h1>
-      <p>
-        Gère STUDY PLANNER, tes utilisateurs et l'activité de la plateforme.
-      </p>
-    </div>
-  </div>
-
-  <div class="admin-dashboard">
-
-    <div class="admin-stat-card">
-      <span class="admin-stat-icon">👥</span>
-      <div>
-        <small>Utilisateurs</small>
-        <strong id="admin-stat-users">—</strong>
-      </div>
-    </div>
-
-    <div class="admin-stat-card">
-      <span class="admin-stat-icon">💎</span>
-      <div>
-        <small>Premium</small>
-        <strong id="admin-stat-premium">—</strong>
-      </div>
-    </div>
-
-    <div class="admin-stat-card">
-      <span class="admin-stat-icon">🌸</span>
-      <div>
-        <small>Free</small>
-        <strong id="admin-stat-free">—</strong>
-      </div>
-    </div>
-
-    <div class="admin-stat-card">
-      <span class="admin-stat-icon">✨</span>
-      <div>
-        <small>Actifs aujourd'hui</small>
-        <strong id="admin-stat-active">—</strong>
-      </div>
-    </div>
-
-    <div class="admin-stat-card">
-      <span class="admin-stat-icon">📚</span>
-      <div>
-        <small>Matières</small>
-        <strong id="admin-stat-subjects">—</strong>
-      </div>
-    </div>
-
-    <div class="admin-stat-card">
-      <span class="admin-stat-icon">🧠</span>
-      <div>
-        <small>Flashcards</small>
-        <strong id="admin-stat-flashcards">—</strong>
-      </div>
-    </div>
-
-    <div class="admin-stat-card">
-      <span class="admin-stat-icon">📝</span>
-      <div>
-        <small>Quiz réalisés</small>
-        <strong id="admin-stat-quizzes">—</strong>
-      </div>
-    </div>
-
-    <div class="admin-stat-card">
-      <span class="admin-stat-icon">⏱️</span>
-      <div>
-        <small>Minutes Focus</small>
-        <strong id="admin-stat-focus">—</strong>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="admin-section">
-
-    <div class="admin-section-header">
-      <div>
-        <span class="eyebrow">ACTIVITÉ</span>
-        <h2>Vue d'ensemble</h2>
-      </div>
-
-      <button
-        type="button"
-        class="secondary-button"
-        id="admin-refresh-stats"
-      >
-        Actualiser
-      </button>
-    </div>
-
-    <div class="admin-overview-grid">
-
-      <div class="admin-overview-card">
-        <span>📖 Chapitres</span>
-        <strong id="admin-stat-chapters">—</strong>
-      </div>
-
-      <div class="admin-overview-card">
-        <span>📄 Cours / contenus</span>
-        <strong id="admin-stat-materials">—</strong>
-      </div>
-
-      <div class="admin-overview-card">
-        <span>🔁 Révisions</span>
-        <strong id="admin-stat-revisions">—</strong>
-      </div>
-
-      <div class="admin-overview-card">
-        <span>🏆 XP total</span>
-        <strong id="admin-stat-xp">—</strong>
-      </div>
-
-      <div class="admin-overview-card">
-        <span>🌱 Blocs Garden</span>
-        <strong id="admin-stat-garden">—</strong>
-      </div>
-
-      <div class="admin-overview-card">
-        <span>✅ Tâches terminées</span>
-        <strong id="admin-stat-tasks">—</strong>
-      </div>
-
-    </div>
-
-  </div>
-<!-- ============================================
-     GESTION DES UTILISATEURS
-     ============================================ -->
-
-<div class="admin-section">
-
-  <div class="admin-section-header">
-    <div>
-      <span class="eyebrow">UTILISATEURS</span>
-      <h2>Gestion des comptes</h2>
-      <p>Gère les accès et les récompenses des utilisateurs.</p>
-    </div>
-
-    <button
-      type="button"
-      class="secondary-button"
-      id="admin-refresh-users"
-    >
-      Actualiser
-    </button>
-  </div>
-
-  <div class="admin-user-search">
-    <input
-      type="search"
-      id="admin-user-search"
-      placeholder="Rechercher un nom, pseudo ou email..."
-      autocomplete="off"
-    >
-  </div>
-
-  <div
-    id="admin-users-list"
-    class="admin-users-list"
-  >
-    <div class="admin-loading">
-      Chargement des utilisateurs…
-    </div>
-  </div>
-
-</div>
+  <!-- Le contenu d'administration doit être placé ici,
+       en dehors de page-profile. -->
 </section>
-</section>        
-
-        <div class="page-header">
-
-          <div>
-
-            <span class="eyebrow">
-              PERSONNALISATION
-            </span>
-
-            <h1>
-              Profil & paramètres
-            </h1>
-
-            <p class="page-description">
-              Gère ton profil, ta langue et tes données.
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <div class="profile-layout">
-
-
-          <!-- PROFIL -->
-
-          <div class="panel">
 
             <div class="panel-header">
 
